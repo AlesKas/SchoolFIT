@@ -7,7 +7,7 @@
 #ifndef BATCHMANDELCALCULATOR_H
 #define BATCHMANDELCALCULATOR_H
 
-#include <BaseMandelCalculator.h>
+#include "BaseMandelCalculator.h"
 
 class BatchMandelCalculator : public BaseMandelCalculator
 {

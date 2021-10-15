@@ -8,7 +8,7 @@
 #ifndef REFMANDELCALCULATOR_H
 #define REFMANDELCALCULATOR_H
 
-#include <BaseMandelCalculator.h>
+#include "BaseMandelCalculator.h"
 
 class RefMandelCalculator : public BaseMandelCalculator
 {

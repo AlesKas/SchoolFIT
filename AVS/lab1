@@ -1,1 +1,3 @@
 qstat -U $USER // ukáže aktivní joby
+
+python3 ../scripts/visualise.py ref.npz --show
