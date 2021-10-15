@@ -1,0 +1,3 @@
+/run/media/akasparek/SDHC/avs-proj01/build/CMakeFiles/rebuild_cache.dir
+/run/media/akasparek/SDHC/avs-proj01/build/CMakeFiles/edit_cache.dir
+/run/media/akasparek/SDHC/avs-proj01/build/CMakeFiles/mandelbrot.dir

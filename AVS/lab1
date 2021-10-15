@@ -1,0 +1,1 @@
+qstat -U $USER // ukáže aktivní joby

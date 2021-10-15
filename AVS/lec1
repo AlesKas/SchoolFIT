@@ -1,0 +1,31 @@
+amdalův zákon
+	mám úlohu (práci) => chci to zrychlit => rozdělím mezi jádra
+	mám sekvenční část práce, která nejde paralizovat
+	
+
+maximalíní zrychlení 
+	limita 
+	čím více jader tím menší efektivita
+
+přidávám jádara => zvyšuju velikost paralelní práce
+alfa = poměr času v seriové ku paralelní části
+
+dvojnásobný počet mi nedá poloviční čas
+
+skalární => instruction pipeline
+superskalární => rozdělujou data mezi více jader
+
+
+k=počet stupňů
+ta= doba jendoho stupně
+N= počet instrukcí
+jeden stupněň = tau + td (doba uložení)
+čím více stupňů tím ryhclejší
+čím delší doba uložení do registru tím pomalejší
+
+průměrná pokuta 
+
+risc = omezená instrukční sada 
+	skoky
+	alu operace
+	load a store operace - jediná pracuje s pamětí
