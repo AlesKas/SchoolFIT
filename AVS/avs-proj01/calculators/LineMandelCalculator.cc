@@ -49,20 +49,11 @@ static inline int mandelbrot(T real, T imag, int limit)
 }
 
 int * LineMandelCalculator::calculateMandelbrot () {
-	// @TODO implement the calculator & return array of integers
 	int *pdata = data;
-	// for (int i = 0; i < height * width; i++) {
-	// 	float x = i;
-	// 	float y = x;
-
-	// 	int value = mandelbrot(x, y, limit);
-
-	// 	*(pdata++) = value;
-	// }
-
-	#pragma unroll(4)
 	for (int i = 0; i < height; i++)
 	{
+		#pragma unroll(8)
+		#pragma omp simd
 		for (int j = 0; j < width; j++)
 		{
 			float x = x_start + j * dx; // current real value
