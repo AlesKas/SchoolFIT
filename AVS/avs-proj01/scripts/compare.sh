@@ -12,7 +12,7 @@ echo "Reference vs line"
 python3 ${SCRIPT_ROOT_PATH}/compare.py cmp_ref.npz cmp_line.npz  || VALID=0
 
 echo "Reference vs batch"
-python3 ${SCRIPT_ROOT_PATH}/compare.py cmp_ref.npz cmp_line.npz || VALID=0
+python3 ${SCRIPT_ROOT_PATH}/compare.py cmp_ref.npz cmp_batch.npz || VALID=0
 
 
 echo "Batch vs line"

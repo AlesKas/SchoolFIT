@@ -10,7 +10,7 @@
 #include <algorithm>
 
 #include <stdlib.h>
-
+#include <malloc.h>
 
 #include "LineMandelCalculator.h"
 
@@ -19,50 +19,51 @@ LineMandelCalculator::LineMandelCalculator (unsigned matrixBaseSize, unsigned li
 	BaseMandelCalculator(matrixBaseSize, limit, "LineMandelCalculator")
 {
 	// @TODO allocate & prefill memory
-	data = (int *)(malloc(height * width * sizeof(int)));
+	data = (int*)_mm_malloc(width * height * sizeof(int), 64);
+	for (int i = 0; i < height * width; i++) {
+		data[i] = limit;
+	}
+    realVal = (float*)_mm_malloc(width * sizeof(float), 64);
+    imagVal = (float*)_mm_malloc(width * sizeof(float), 64);
 }
 
 LineMandelCalculator::~LineMandelCalculator() {
 	// @TODO cleanup the memory
-	free(data);
+	_mm_free(data);
 	data = NULL;
-}
-
-template <typename T>
-static inline int mandelbrot(T real, T imag, int limit)
-{
-	T zReal = real;
-	T zImag = imag;
-
-	for (int i = 0; i < limit; ++i)
-	{
-		T r2 = zReal * zReal;
-		T i2 = zImag * zImag;
-
-		if (r2 + i2 > 4.0f)
-			return i;
-
-		zImag = 2.0f * zReal * zImag + imag;
-		zReal = r2 - i2 + real;
-	}
-	return limit;
+	_mm_free(realVal);
+	realVal = NULL;
+	_mm_free(imagVal);
+	imagVal = NULL;
 }
 
 int * LineMandelCalculator::calculateMandelbrot () {
-	int *pdata = data;
-	for (int i = 0; i < height; i++)
-	{
-		#pragma unroll(8)
-		#pragma omp simd
-		for (int j = 0; j < width; j++)
-		{
-			float x = x_start + j * dx; // current real value
-			float y = y_start + i * dy; // current imaginary value
-
-			int value = mandelbrot(x, y, limit);
-
-			*(pdata++) = value;
+	int pixelsSet = 0;
+	float *pReal = realVal;
+	float *pImag = imagVal;
+	for (int heightIndex = 0; heightIndex < height; heightIndex++) {
+		int *pdata = data + heightIndex * width;
+		float imag = y_start + heightIndex * dy;
+		for (int i = 0; i < width; i++) {
+			pReal[i] = x_start + i * dx;
+			pImag[i] = imag;
 		}
+		for (int iteration = 0; pixelsSet < width && iteration < limit; iteration++) {
+			#pragma omp simd reduction(+:pixelsSet) aligned(pdata : 64, pReal : 64, pImag : 64) simdlen(128)
+			for (int widthIndex = 0; widthIndex < width; widthIndex++) {
+				float real = x_start + widthIndex * dx;
+				float r2 = pReal[widthIndex] * pReal[widthIndex];
+				float i2 = pImag[widthIndex] * pImag[widthIndex];
+
+				if (r2 + i2 > 4.0f && pdata[widthIndex] == limit) {
+					pdata[widthIndex] = iteration;
+					pixelsSet++;
+				}
+				pImag[widthIndex] = 2.0f * pReal[widthIndex] * pImag[widthIndex] + imag;
+				pReal[widthIndex] = r2 - i2 + real;
+			}
+		}
+		pixelsSet = 0;
 	}
 	return data;
 }
