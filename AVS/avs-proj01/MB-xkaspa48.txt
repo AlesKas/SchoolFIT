@@ -2,24 +2,33 @@
 
 1. Proč je nutné určovat, zda má výpočet pokračovat?
 ==============================================================================
+Aby se nepopračovalo v iterování, v případě že už jsou všechny pixely (příslišné indexy pole) nastaveny.
+Např. aby se neprokačovalo v iterování řádku, který už má všechny hodnoty nastavené.
 
 
 2. Byla "Line" vektorizace efektivní? Proč?
 ==============================================================================
+Line vektorizace nebyla zcela optimální, jelikož by šlo dosáhnout větší efektivnosti, ale vůči referenčnímu řešení je vektorizace efektivní.
 
 
 3. Jaká byla dosažena výkonnost v Intel Advisoru pro jednotlivé implementace 
 (v GFLOPS)?
 ==============================================================================
+REF - 2.24
+LINE - 30.10
+BATCH - 17.63
 
 
 4. Jaká část kódu byla paralizována v "Line" implementaci? Vyčteme tuto 
 informaci i u batch kalkulátoru?
 ==============================================================================
+V line implementaci byla vektorizována část, která má za úkol najít pro jednotlivé pixely v řádku příslušnou hodnotu iterace.
+U batch implementace to je obdobné, akorát nepočítáme hodnoty pro celý rádek, ale pro menší bloky, které se lépe vlezou do cache.
 
 
 5. Co vyčteme z Roofline modelu pro obě vektorizované implementace?
 ==============================================================================
-
+U vektorizované verze LINE jsem zhora omezený vektorovým sčítáním a data se nachází v L2 cachi.
+U verze BATCH obdobně.
 
 
