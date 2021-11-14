@@ -19,13 +19,13 @@ BatchMandelCalculator::BatchMandelCalculator (unsigned matrixBaseSize, unsigned 
 	BaseMandelCalculator(matrixBaseSize, limit, "BatchMandelCalculator")
 {
 	// @TODO allocate & prefill memory
-	data = ((int *) _mm_malloc(height * width * sizeof(int), 64));
+	data = (int *) _mm_malloc(height * width * sizeof(int), 64);
 	for (int i = 0; i < height * width; i++) {
 		data[i] = limit;
 	}
-    realVal = (float*)_mm_malloc(blockSize * sizeof(float), 64);
-    imagVal = (float*)_mm_malloc(blockSize * sizeof(float), 64);
-	isSet = (bool*)malloc(blockSize * sizeof(bool));
+    realVal = (float*)_mm_malloc(blockSize * blockSize * sizeof(float), 64);
+    imagVal = (float*)_mm_malloc(blockSize * blockSize * sizeof(float), 64);
+	pixelSet = (bool*)_mm_malloc(blockSize * blockSize * sizeof(bool), 64);
 }
 
 BatchMandelCalculator::~BatchMandelCalculator() {
@@ -36,8 +36,8 @@ BatchMandelCalculator::~BatchMandelCalculator() {
 	realVal = NULL;
 	_mm_free(imagVal);
 	imagVal = NULL;
-	free(isSet);
-	isSet = NULL;
+	_mm_free(pixelSet);
+	pixelSet = NULL;
 }
 
 int * BatchMandelCalculator::calculateMandelbrot () {
@@ -45,38 +45,40 @@ int * BatchMandelCalculator::calculateMandelbrot () {
 	int pixelsSet = 0;
 	float *pReal = realVal;
 	float *pImag = imagVal;
+	bool *isSet = pixelSet;
 	for (int blockHeight = 0; blockHeight < height / blockSize; blockHeight++) {
 		for (int blockWidht = 0; blockWidht < width / blockSize; blockWidht++) {
-			for (int i = 0; i < blockSize; i++) {
-				const int iGlobal = blockHeight * blockSize + i;
-				int *pdata = data + (iGlobal * width + blockWidht * blockSize);
-				float imag = y_start + iGlobal * dy;
-				for (int j = 0; j < blockSize; j++) {
-					int jGlobal = blockWidht * blockSize + j;
-					pReal[j] = x_start + jGlobal * dx;
-					pImag[j] = imag;
-					isSet[j] = false;
-				}
-				for (int iteration = 0; iteration < limit && pixelsSet < blockSize; iteration++) {
-					int someIndex = blockWidht * blockSize;
-					#pragma omp simd reduction(+:pixelsSet) aligned(pdata : 64, pReal : 64, pImag : 64) simdlen(128)
-					for (int j = 0; j < blockSize; j++) {
-						float real = x_start + (someIndex + j) * dx;
-						float r2 = pReal[j] * pReal[j];
-						float i2 = pImag[j] * pImag[j];
-						if (r2 + i2 > 4.0f && !isSet[j]) {
-							*(pdata) = iteration;
-							isSet[j] = true;
+			for (int iteration = 0; iteration < limit && pixelsSet < blockSize * blockSize; iteration++) {
+				for (int tileHeight = 0; tileHeight < blockSize; tileHeight++) {
+					const int iGlobal = blockHeight * blockSize + tileHeight;
+					int *pdata = data + (iGlobal * width + blockWidht * blockSize);
+					float imag = y_start + iGlobal * dy;
+					float *pReal = realVal + tileHeight * blockSize;
+					float *pImag = imagVal + tileHeight * blockSize;
+					bool *isSet = pixelSet + tileHeight * blockSize;
+					int jGlobal = blockWidht * blockSize;
+					#pragma omp simd reduction(+:pixelsSet) aligned(pdata:64, pReal:64, pImag:64, isSet:64) simdlen(256)
+					for (int tileWidth = 0; tileWidth < blockSize; tileWidth++) {
+						float real = x_start + (jGlobal + tileWidth) * dx;
+						if (iteration == 0) {
+							pReal[tileWidth] = x_start + (blockWidht * blockSize + tileWidth) * dx;
+							pImag[tileWidth] = imag;
+							isSet[tileWidth] = false;
+						}
+
+						float r2 = pReal[tileWidth] * pReal[tileWidth];
+						float i2 = pImag[tileWidth] * pImag[tileWidth];
+						if (r2 + i2 > 4.0f && !isSet[tileWidth]) {
+							pdata[tileWidth] = iteration;
+							isSet[tileWidth] = true;
 							pixelsSet++;
 						}
-						pImag[j] = 2.0f * pReal[j] * pImag[j] + imag;
-						pReal[j] = r2 - i2 + real;	
-						pdata++;
+						pImag[tileWidth] = 2.0f * pReal[tileWidth] * pImag[tileWidth] + imag;
+						pReal[tileWidth] = r2 - i2 + real;		
 					}
-					pdata -= blockSize;
 				}
-				pixelsSet = 0;
 			}
+			pixelsSet = 0;
 		}
 	}
 	return data;

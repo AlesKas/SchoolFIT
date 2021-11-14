@@ -15,20 +15,21 @@ Line vektorizace nebyla zcela optimální, jelikož by šlo dosáhnout větší 
 (v GFLOPS)?
 ==============================================================================
 REF - 2.24
-LINE - 30.10
-BATCH - 17.63
+LINE - 31.52
+BATCH - 22.75
 
 
 4. Jaká část kódu byla paralizována v "Line" implementaci? Vyčteme tuto 
 informaci i u batch kalkulátoru?
 ==============================================================================
 V line implementaci byla vektorizována část, která má za úkol najít pro jednotlivé pixely v řádku příslušnou hodnotu iterace.
-U batch implementace to je obdobné, akorát nepočítáme hodnoty pro celý rádek, ale pro menší bloky, které se lépe vlezou do cache.
+V případě batch implementace se provádí iterace nad pixely v rámci menšího bloku pixelů, který se mnohem lépe vejde co cache.
 
 
 5. Co vyčteme z Roofline modelu pro obě vektorizované implementace?
 ==============================================================================
-U vektorizované verze LINE jsem zhora omezený vektorovým sčítáním a data se nachází v L2 cachi.
-U verze BATCH obdobně.
+Pro line implementaci se pohybujeme za hranicí, kdy jsme omezeni pamětí a výkonostně jsme shora omezeni vektorovým sčítáním.
+Pro batch implementaci opět pohybujeme za hranicí omezení pamětí a jsme omezeni výkonem, a mnohem více se přibližujeme horní hranici
+propustnosti L2 cache.
 
 

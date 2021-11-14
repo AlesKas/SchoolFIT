@@ -21,8 +21,8 @@ private:
     int* data;
     float *realVal;
     float * imagVal;
-    bool *isSet;
-	const size_t blockSize = 128;
+    bool *pixelSet;
+	const size_t blockSize = 64;
 };
 
 #endif
