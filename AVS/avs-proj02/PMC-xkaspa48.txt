@@ -1,0 +1,80 @@
+Architektury Výpočetních Systémů (AVS 2021)
+Projekt č. 2 (PMC)
+Login: xkaspa48
+
+Úloha 1: Paralelizace původního řešení
+===============================================================================
+
+1) Kterou ze smyček (viz zadání) je vhodnější paralelizovat a co způsobuje 
+   neefektivitu paralelizaci té druhé?
+   Vhodnější je paralelizovat vnější smyčku, u paralelizace vnitřní smyčky dochází k dle mého názoru k 
+   vetváření velkého množství vláken, což má negativní důsledky na trvání výpočtu.
+
+2) Jaké plánování (rozdělení práce mezi vlákna) jste zvolili a proč? 
+   Jaký vliv má velikost "chunk" při dynamickém plánování (8, 16, 32, 64)?
+   Zvolil jsem statické plánování, jelikož v každé iteraci se provádí stejně složitý výpočet.
+   Velikost chunk-size má vliv na to, kolik itercí jednotlivá vlákna provádějí.
+
+
+3) Jakým způsobem zajišťujete ukládání trojúhelníků z několika vláken současně?
+   Přidávání trojúhelníků je zajištěno kritickou sekcí, do které smí vstoupit pouze jedno vlákno.
+
+
+Úloha 2: Paralelní průchod stromem
+===============================================================================
+
+1) Stručně popište použití OpenMP tasků ve vašem řešení.
+   Tasky jsou požity v dekompozici prostoru, kdy právě jeden z 8 potomků má vlastní task.
+   Povolit vytváření tasků bylo nutné direktivou #pragma omp parallel nad místem, kde se poprvé volá
+   dekompozice prostoru. Dále bylo nutné přidat direktivu #pragma omp single nowait, aby se metoda 
+   pro dekompozici prostoru volala pouze jedním vláknem, a dovětek nowait značí odebrání implicitní bariéry .
+
+2) Jakým způsobem jste realizovali sesbírání celkového počtu trojúhelníků?
+   Sesbírání trojúhelníků je řešeno atomickým přičítám počtu trojúhelníků, které vznikly v rámci jednoho
+   tasku ke sdílené proměnné.
+   Dále bylo nutné přidat bariéru před návrat z metody, aby se počkalo na doběhnutí vláken potomků.
+
+3) Jaký vliv má na vaše řešení tzv. "cut-off"? Je vhodné vytvářet nový 
+   task pro každou krychli na nejnižší úrovni?
+   Cut-off je velice efektivní, jelikož díky němu nemusíme procházet potomky, kterými neprochází hledaný povrch, což má 
+   pozitivný výsledek na dobu trvání programu.
+   Vytváření tasku v nejnižší úrovni nemá smysl, jelikož dochází pouze k zavolání metody buildCube, která už generuje trojúhelníky.
+
+4) Jakým způsobem zajišťujete ukládání trojúhelníků z několika vláken současně?
+   Přidávání je zajištěno stejně jako u loop implementace pomocí kritické sekce.
+
+Úloha 3: Grafy škálování všech řešení
+===============================================================================
+
+1) Stručně zhodnoťte efektivitu vytvořených řešení (na základě grafů škálování).
+   Z grafu je patrné, že pro menší počty prvků je implementace loop efektivnější.
+   Naopak pro větší počty elemtů je implementace Octree, která je pro menší počty řádově 
+   horší, než implementace loop. Od určité velikosti mřížky pak doba výpočtu roste lineárně. 
+
+2) V jakém případě (v závislosti na počtu bodů ve vstupním souboru a velikosti 
+   mřížky) bude vaše řešení 1. úlohy neefektivní? (pokud takový případ existuje)
+   Implementace loop je neefektivní, pokud běží sériově, nebo běží na menším počtu vláken.
+
+3) Je (nebo není) stromový algoritmus efektivnější z pohledu slabého škálování 
+   vzhledem ke vstupu?
+   Stromový algoritmus pro slabé škálování není efektivní.
+
+Úloha 4: Analýza využití jader pomocí VTune
+================================================================================
+
+1) Jaké bylo průměrné využití jader pro všechny tři implementace s omezením na 
+   18 vláken? Na kolik procent byly využity?
+   
+   ref: Efektivně bylo použito 0.996 jádra.
+   loop: Efektivně bylo využito 17.122 jáder a byly využity na 96%.
+   tree: Efektivně bylo využito 14.893 jádra a bylo využity na 89.9%. 
+
+2) Jaké bylo průměrné využití jader pro všechny tři implementace s využitím 
+   všech jader? Na kolik procent se podařilo využít obě CPU?
+   
+   ref: Efektivně bylo použito 0.996 jádra.
+   loop: Efektivně bylo použito 26.69 jader na 89.5%.
+   tree: Efektivně bylo použito 22.83 jader na 73.3%
+
+3) Jaké jsou závěry z těchto měření?
+
