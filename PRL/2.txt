@@ -1,0 +1,7 @@
+MPI
+    komunikujé sdílenou pamětí a zasíláním zpráv
+    paralelizmus na úrovni procesů a vláken
+    knihovna
+
+PVM
+    paralelní virtuální mašina
