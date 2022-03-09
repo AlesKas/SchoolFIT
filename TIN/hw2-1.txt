@@ -1,0 +1,104 @@
+name: hw2-exc1
+init: two
+accept: ten
+
+// https://turingmachinesimulator.com/
+
+// state one skipped, as the TM starts at the first input sequence character
+
+two, a
+three, x, -
+
+two, b
+four, x, -
+
+two, _
+eight, _, <
+
+two, x
+two, x, >
+
+//
+
+three, a
+three, a, >
+
+three, x
+three, x, >
+
+three, b
+two, x, -
+
+three, _
+five, _, <
+
+//
+
+four, b
+four, b, >
+
+four, x
+four, x, >
+
+four, a
+two, x, -
+
+four, _
+six, _, <
+
+//
+
+five, a
+five, a, <
+
+five, x
+seven, a, -
+
+// 
+
+six, x
+nine, b, -
+
+six, b
+six, b, <
+
+// 
+
+seven, _
+two, _, >
+
+seven, a
+seven, a, <
+
+seven, b
+seven, b, <
+
+seven, x
+seven, x, <
+
+// 
+
+eight, x
+eight, x, <
+
+eight, a
+seven, a, <
+
+eight, b
+nine, b, <
+
+//
+
+nine, a
+seven, a, <
+
+nine, b
+nine, b, <
+
+nine, x
+nine, x, <
+
+// 
+
+nine, _
+ten, _, -
