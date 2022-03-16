@@ -1,3 +1,5 @@
+// node verison: 14.19.0
+
 /// Využijeme knihovnu, která je předmětem zadání projektu
 import { Tree } from "./tree.mjs";
 
