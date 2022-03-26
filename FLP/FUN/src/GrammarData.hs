@@ -19,7 +19,6 @@ data Grammar = Grammar {
 
 instance Show Grammar where
     show (Grammar nonterm term rules start) =
-        "\n" ++
         join "," nonterm ++ "\n"
         ++ join "," term ++ "\n"
         ++ start ++ "\n"

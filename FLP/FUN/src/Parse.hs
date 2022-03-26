@@ -2,6 +2,7 @@ module Parse (parseGrammar) where
 
 import Data.List.Split ( splitOn )
 import GrammarData
+import Debug.Trace
 
 parseGrammar :: [String] -> Grammar
 parseGrammar [] = error "Wrong input grammar, missing something."
@@ -16,10 +17,12 @@ parseGrammar (x:y:z:xz) =
             startingNonterminal = z
         }
 
+-- Parse input intu Rule
+-- Right side of every rule is devided into characters for easier work later
 parseRules :: String -> Rule
-parseRules x =
+parseRules inputRule =
     if length subParts == 2
-        then Rule {left = head subParts, right = tail subParts}
+        then Rule {left = head subParts, right = filter (/="") (splitOn "" (head $ tail subParts))}
         else error "Wrong input rules."
-    where subParts = splitOn "->" x
+    where subParts = splitOn "->" inputRule
 

@@ -4,6 +4,8 @@ module Main (main) where
 import System.Environment
 import Parse
 import IsValid
+import Simple
+import Cnf
 import System.IO
 
 -- Process input arguments, expected aruments are (-i, -1, -2) and input file
@@ -19,7 +21,7 @@ procArgs [x,y]
 procArgs _ = error "Expects max 2 arguments"
 
 readGrammar :: String -> String -> IO String
-readGrammar option filePath = if filePath == "" then getContents else readFile  filePath
+readGrammar option filePath = if filePath == "" then getContents else readFile filePath
 
 main :: IO()
 main = do
@@ -31,7 +33,8 @@ main = do
     if isValidBKG bkg
         then
             case setting of "-i" -> print bkg
-                            "-1" -> print bkg
-                            "-2" -> print bkg
+                            "-1" -> print (removeSimpleRules bkg)
+                            "-2" -> print (bkg2cnf (removeSimpleRules bkg))
+                            _ -> error "Already tested aguments, adding this to become exhaustive"
         else error "Wrong input grammar."
     return()

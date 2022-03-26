@@ -1,8 +1,9 @@
 S,A,B
-a,b,c,d
+a,b
 S
-S->aB
-A->aAb
-A->ab
-B->cBd
-B->cd
+S->aAB
+S->BA
+A->BBB
+A->a
+B->AS
+B->b
