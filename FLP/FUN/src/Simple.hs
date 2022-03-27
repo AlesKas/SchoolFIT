@@ -32,7 +32,7 @@ createNonSimpleRules nonTerm naSet (Rule left right : rest) =
 
 -- Checks if input rule is simple rule
 isSimpleRule :: Rule -> Bool
-isSimpleRule (Rule l [r])
-    | head r `elem` ['A'..'Z'] && length r == 1 = True
+isSimpleRule (Rule left [right])
+    | head right `elem` ['A'..'Z'] && length right == 1 = True
     | otherwise = False
-isSimpleRule (Rule l r) = False
+isSimpleRule (Rule left right) = False

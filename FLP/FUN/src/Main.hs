@@ -12,11 +12,11 @@ import System.IO
 -- Input file can also be empty, in that case read input grammar fron STDIN
 processArguments :: [String] -> (String, String)
 processArguments [] = error "Expected some arguments"
-processArguments [x] = (x, "")
-processArguments [x,y]
-    | x == "-i" = ("-i", y)
-    | x == "-1" = ("-1", y)
-    | x == "-2" = ("-2", y)
+processArguments [option] = (option, "")
+processArguments [option,filePath]
+    | option == "-i" = ("-i", filePath)
+    | option == "-1" = ("-1", filePath)
+    | option == "-2" = ("-2", filePath)
     | otherwise = error "Unknown argument"
 processArguments _ = error "Expects max 2 arguments"
 
