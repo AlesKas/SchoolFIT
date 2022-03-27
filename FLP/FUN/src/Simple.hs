@@ -15,6 +15,7 @@ processRules (nonTerm:nonTerms) rules = createNonSimpleRules nonTerm (nub (creat
 
 -- Create Na set
 -- For each nonterminal check if there is simple rule that is in the non list, if yes, add right side of that rule to non list and continue
+-- Tested, also working on rules S->A and A->B, so Na set for S is {S,A,B}
 createNaSet :: String -> [String] -> [Rule] -> [String]
 createNaSet nonTerm non [] = []
 createNaSet nonTerm non [Rule left right] = non ++ [ head right | left `elem` non && isSimpleRule (Rule left right)]
