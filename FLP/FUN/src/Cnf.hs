@@ -24,6 +24,7 @@ isValidCnfRule :: [String] -> Bool
 isValidCnfRule rule
     | length rule == 1 && elem (head (head rule)) ['a'..'z'] = True
     | length rule == 2 && elem (head (head rule)) ['A'..'Z'] && elem (head (head (tail rule))) ['A'..'Z'] = True
+    | length rule == 2 && head (head rule) == '<' = True
     | otherwise = False
 
 -- If rule is already valid CNF rule carry on,
@@ -37,14 +38,14 @@ bkgRulesToCnfRules [Rule left right] =
 bkgRulesToCnfRules (Rule left right : rest) = 
     if isValidCnfRule right 
         then Rule left right : bkgRulesToCnfRules rest
-        else transformRulesToCnf (Rule left right) [] ++ bkgRulesToCnfRules rest
+        else bkgRulesToCnfRules rest ++ transformRulesToCnf (Rule left right) []
 
 -- Splits BKG rule into two
 -- first rule is currently processed rule
--- [Rules] are list of rules that originated from spliting that rule
+-- [Rules] are list of rules that originated from spliting that rule, so I need to check also that, if they are valid CNF rules
 transformRulesToCnf :: Rule -> [Rule] -> [Rule]
 transformRulesToCnf (Rule left right) rule =
-    if length right == 2 
+    if isValidCnfRule right
         then rule ++ [Rule left right]
         else transformRulesToCnf (newToOld (createComplexNonterm right) (tail right)) (rule ++ [oldToNew left (head right : [createComplexNonterm right])])
 

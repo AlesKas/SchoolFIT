@@ -27,9 +27,9 @@ validNonTerm non start = elem start non || error "Nonterminal is not in set of n
 
 -- Check if there are valid terminals and nonterminals in rules
 validRules :: [Rule] -> [String] -> [String] -> Bool
-validRules [] nonTerm term = False 
-validRules [r] nonTerm term = validRule r nonTerm term
-validRules (r:rs) nonTerm term = (validRule r nonTerm term && validRules rs nonTerm term) || error "Wrong input rules."
+validRules [] nonTerm term = False
+validRules [rule] nonTerm term = validRule rule nonTerm term
+validRules (rule:rest) nonTerm term = (validRule rule nonTerm term && validRules rest nonTerm term) || error "Wrong input rules."
 
 -- Check if ther is valid nonterminal on the left side of the rule
 -- And then check if on the right side there are valid non/terminals as well
@@ -37,10 +37,13 @@ validRule :: Rule -> [String] -> [String] -> Bool
 validRule (Rule left right) nonTerm term = validNonTerm nonTerm left && validRightSide (head right) nonTerm term
 
 -- Well, this is kinda complicated
--- take first char of right side of rule and check if there is proper non/terminal and continue with tail of right side
+-- Check if right side is longer then 1
+-- if yes, take first char of right side and check if there is proper non/terminal and continue with tail of right side
+-- else check if there is valid non/terminal
 validRightSide :: String -> [String] -> [String] -> Bool 
 validRightSide [] nonTerm term = False 
-validRightSide x nonTerm term = if length x > 1 then [head x] `elem` (nonTerm++term) && validRightSide (tail x) nonTerm term else x `elem` (nonTerm++term)
+validRightSide rightSide nonTerm term = 
+    if length rightSide > 1 then [head rightSide] `elem` (nonTerm++term) && validRightSide (tail rightSide) nonTerm term else rightSide `elem` (nonTerm++term)
 
 maxLength1 :: String -> Bool
 maxLength1 x = length x == 1

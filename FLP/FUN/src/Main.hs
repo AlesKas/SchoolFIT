@@ -10,15 +10,15 @@ import System.IO
 
 -- Process input arguments, expected aruments are (-i, -1, -2) and input file
 -- Input file can also be empty, in that case read input grammar fron STDIN
-procArgs :: [String] -> (String, String)
-procArgs [] = error "Expected some arguments"
-procArgs [x] = (x, "")
-procArgs [x,y]
+processArguments :: [String] -> (String, String)
+processArguments [] = error "Expected some arguments"
+processArguments [x] = (x, "")
+processArguments [x,y]
     | x == "-i" = ("-i", y)
     | x == "-1" = ("-1", y)
     | x == "-2" = ("-2", y)
     | otherwise = error "Unknown argument"
-procArgs _ = error "Expects max 2 arguments"
+processArguments _ = error "Expects max 2 arguments"
 
 readGrammar :: String -> String -> IO String
 readGrammar option filePath = if filePath == "" then getContents else readFile filePath
@@ -26,8 +26,7 @@ readGrammar option filePath = if filePath == "" then getContents else readFile f
 main :: IO()
 main = do
     args <- getArgs
-
-    let (setting, inputFile) = procArgs args
+    let (setting, inputFile) = processArguments args
     inputGrammar <- readGrammar setting inputFile
     let bkg = parseGrammar (Prelude.lines inputGrammar)
     if isValidBKG bkg
