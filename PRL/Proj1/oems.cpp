@@ -3,47 +3,21 @@
 #include <iostream>
 #include <algorithm>
 
-int merge(int *bufferData, int numsPerFirst, int *remote, int numsPerSecond, int *merged) {
-    int i,j;
-    int index=0;
+// int merge(int *bufferData, int numsPerFirst, int *remote, int numsPerSecond, int *merged) {
+//     int i,j;
+//     int index=0;
 
-    for (i=0,j=0; i < numsPerFirst; i++) {
-        while ((remote[j] < bufferData[i]) && j < numsPerSecond) {
-            merged[index++] = remote[j++];
-        }
-        merged[index++] = bufferData[i];
-    }
-    while (j < numsPerSecond)
-        merged[index++] = remote[j++];
+//     for (i=0,j=0; i < numsPerFirst; i++) {
+//         while ((remote[j] < bufferData[i]) && j < numsPerSecond) {
+//             merged[index++] = remote[j++];
+//         }
+//         merged[index++] = bufferData[i];
+//     }
+//     while (j < numsPerSecond)
+//         merged[index++] = remote[j++];
 
-    return 0;
-}
-
-void ExchangePairs(int numsPerProc, int *bufferData, int sendrank, int recvrank, MPI_Comm comm) {
-    int rank;
-    int remote[numsPerProc];
-    int merged[2*numsPerProc];
-    const int mergetag = 1;
-    const int sortedtag = 2;
-
-    MPI_Comm_rank(comm, &rank);
-    if (rank == sendrank) {
-        MPI_Send(bufferData, numsPerProc, MPI_INT, recvrank, mergetag, MPI_COMM_WORLD);
-        MPI_Recv(bufferData, numsPerProc, MPI_INT, recvrank, sortedtag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    } else {
-        MPI_Recv(remote, numsPerProc, MPI_INT, sendrank, mergetag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        merge(bufferData, numsPerProc, remote, numsPerProc, merged);
-
-        int theirstart = 0, mystart = numsPerProc;
-        if (sendrank > rank) {
-            theirstart = numsPerProc;
-            mystart = 0;
-        }
-        MPI_Send(&(merged[theirstart]), numsPerProc, MPI_INT, sendrank, sortedtag, MPI_COMM_WORLD);
-        for (int i=mystart; i<mystart+numsPerProc; i++)
-            bufferData[i-mystart] = merged[i];
-    }
-}
+//     return 0;
+// }
 
 int main(int argc, char *argv[]) {
     std::string inputFile = "numbers";
@@ -55,56 +29,76 @@ int main(int argc, char *argv[]) {
     file.seekg(0, std::ios::beg);
 
     int rank, ranks;
-	int *data;
-    int bufferData[1];
-    int numsPerProc;
 	MPI_Status status;
 
-    data = (int*) malloc(sizeof(int*) * fileSize);
-    memset(data, 0, sizeof(int*) * fileSize);
 	
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &ranks);
 
     if(rank == 0) {
-        int index = 0;
-        int reciever = 1;
-        int number;
-        numsPerProc = ((fileSize / ranks) > 0) ? fileSize / ranks : 1;
-        while (file.good()) {
-            number = file.get();
-            if(!file.good()) 
-                break; 
-            data[index] = number;
-            std::cout << data[index] << " ";
-            index++;
+
+        int *senderBuffer = (int*) malloc(sizeof(int*) * 2);
+        memset(senderBuffer, 0, sizeof(int*) * 2);
+        senderBuffer[0] = file.get();
+        senderBuffer[1] = file.get(); 
+        MPI_Send(senderBuffer, 2, MPI_INT, 1, 0, MPI_COMM_WORLD);
+        std::cout << senderBuffer[0] << " " << senderBuffer[1] << " ";
+
+        senderBuffer[0] = file.get();
+        senderBuffer[1] = file.get();
+        MPI_Send(senderBuffer, 2, MPI_INT, 2, 0, MPI_COMM_WORLD);
+        std::cout << senderBuffer[0] << " " << senderBuffer[1] << " ";
+
+        senderBuffer[0] = file.get();
+        senderBuffer[1] = file.get();
+        MPI_Send(senderBuffer, 2, MPI_INT, 3, 0, MPI_COMM_WORLD);
+        std::cout << senderBuffer[0] << " " << senderBuffer[1] << " ";
+
+        senderBuffer[0] = file.get();
+        senderBuffer[1] = file.get();
+        MPI_Send(senderBuffer, 2, MPI_INT, 4, 0, MPI_COMM_WORLD);
+        std::cout << senderBuffer[0] << " " << senderBuffer[1] << std::endl;
+    }
+
+
+    int *buffer;
+    buffer = (int*)malloc(sizeof(int*) * 8);
+
+    if (rank == 1) {
+        MPI_Recv(buffer, 2, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+        std:: cout << "[" << rank << "] recieved: ";
+        for (int i = 0; i < 2; i++) {
+            std::cout << buffer[i] << " ";
         }
         std::cout << std::endl;
     }
-    else{
-    	data=NULL;
+
+    if (rank == 2) {
+        MPI_Recv(buffer, 2, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+        std:: cout << "[" << rank << "] recieved: ";
+        for (int i = 0; i < 2; i++) {
+            std::cout << buffer[i] << " ";
+        }
+        std::cout << std::endl;
     }
 
-    MPI_Bcast(&numsPerProc,1,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Scatter(data, numsPerProc, MPI_INT, &bufferData, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    for (int i = 1; i <= ranks; i++) {
-        if ((i + rank) % 2 == 0) {
-            if (rank < ranks - 1) {
-                ExchangePairs(numsPerProc, bufferData, rank, rank + 1, MPI_COMM_WORLD);
-            }
-        } else if (rank > 0) {
-            ExchangePairs(numsPerProc, bufferData, rank - 1, rank , MPI_COMM_WORLD);
+    if (rank == 3) {
+        MPI_Recv(buffer, 2, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+        std:: cout << "[" << rank << "] recieved: ";
+        for (int i = 0; i < 2; i++) {
+            std::cout << buffer[i] << " ";
         }
+        std::cout << std::endl;
     }
-    MPI_Gather(bufferData, numsPerProc, MPI_INT, data, numsPerProc, MPI_INT, 0, MPI_COMM_WORLD);
 
-    if (rank == 0) {
-        for (int i = 0; i < ranks; i++) {
-            if (data[i] == 0)
-                continue;
-            std::cout << data[i] << std::endl;
+    if (rank == 4) {
+        MPI_Recv(buffer, 2, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+        std:: cout << "[" << rank << "] recieved: ";
+        for (int i = 0; i < 2; i++) {
+            std::cout << buffer[i] << " ";
         }
+        std::cout << std::endl;
     }
 
     MPI_Finalize(); 
