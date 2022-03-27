@@ -14,7 +14,7 @@ mpic++ --prefix /usr/local/share/OpenMPI -o oems oems.cpp
 dd if=/dev/random bs=1 count=$numbers of=numbers
 
 #spusteni
-mpirun --prefix /usr/local/share/OpenMPI -np $numbers oems
+mpirun --prefix /usr/local/share/OpenMPI -oversubscribe -np 16 oems
 
 #uklid
 rm -f oems numbers

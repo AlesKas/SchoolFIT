@@ -69,8 +69,9 @@ int main(int argc, char *argv[]) {
 
     if(rank == 0) {
         int index = 0;
+        int reciever = 1;
         int number;
-        numsPerProc = fileSize / ranks;
+        numsPerProc = ((fileSize / ranks) > 0) ? fileSize / ranks : 1;
         while (file.good()) {
             number = file.get();
             if(!file.good()) 
@@ -85,9 +86,9 @@ int main(int argc, char *argv[]) {
     	data=NULL;
     }
 
-    MPI_Bcast(&numsPerProc, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&numsPerProc,1,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Scatter(data, numsPerProc, MPI_INT, &bufferData, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    for (int i = 1; i <= fileSize; i++) {
+    for (int i = 1; i <= ranks; i++) {
         if ((i + rank) % 2 == 0) {
             if (rank < ranks - 1) {
                 ExchangePairs(numsPerProc, bufferData, rank, rank + 1, MPI_COMM_WORLD);
@@ -99,7 +100,9 @@ int main(int argc, char *argv[]) {
     MPI_Gather(bufferData, numsPerProc, MPI_INT, data, numsPerProc, MPI_INT, 0, MPI_COMM_WORLD);
 
     if (rank == 0) {
-        for (int i = 0; i < fileSize; i++) {
+        for (int i = 0; i < ranks; i++) {
+            if (data[i] == 0)
+                continue;
             std::cout << data[i] << std::endl;
         }
     }
