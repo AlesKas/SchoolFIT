@@ -38,8 +38,8 @@ transformBkgRuleToCnfRule (Rule left right) rule =
     if length right == 2
         then rule ++ [Rule left right]
         else transformBkgRuleToCnfRule 
-            (newToOld (createComplexNonterm right) (tail right)) 
-            (rule ++ [oldToNew left (head right : [createComplexNonterm right])])
+            (newToOld (createNonterminalFromNonterminals right) (tail right)) 
+            (rule ++ [oldToNew left (head right : [createNonterminalFromNonterminals right])])
 
 -- Alias to create rule from original nonterminal to newly created nonterminal
 oldToNew :: String -> [String] -> Rule
@@ -50,8 +50,8 @@ newToOld :: String -> [String] -> Rule
 newToOld = Rule
 
 -- Create new complex nonterminal of simple nonterminals
-createComplexNonterm :: [String] -> String
-createComplexNonterm xs = concat (["<"] ++ tail xs ++ [">"])
+createNonterminalFromNonterminals :: [String] -> String
+createNonterminalFromNonterminals xs = concat (["<"] ++ tail xs ++ [">"])
 
 -- Transform terminals from right side of the rule to nonterminals
 -- Right side of the rule can now take shape:
