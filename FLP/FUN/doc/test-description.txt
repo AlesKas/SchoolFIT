@@ -1,0 +1,3 @@
+test.in - gramatika použitá v učební opoře předmětu TIN, užitá k demonstraci převodu do CNF
+test01.in - gramatika ze sbírky úloh předmětu TIN
+test02.in - gramatika ze sbírky úloh předmětu TIN

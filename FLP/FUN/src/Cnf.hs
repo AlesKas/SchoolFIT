@@ -53,8 +53,9 @@ newToOld = Rule
 createComplexNonterm :: [String] -> String
 createComplexNonterm xs = concat (["<"] ++ tail xs ++ [">"])
 
--- Transform terminals from left side of the rule to nonterminals
+-- Transform terminals from right side of the rule to nonterminals
 -- Right side of the rule can now take shape:
+-- Terminal Terminal
 -- Terminal Nonterminal
 -- Nonterminal Terminal
 -- Nonterminal Nonterminal
