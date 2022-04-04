@@ -62,12 +62,13 @@ createNonterminalFromNonterminals xs = concat (["<"] ++ tail xs ++ [">"])
 -- Nonterminal Nonterminal
 transformTerminalsToNonterminals :: [Rule] -> [Rule]
 transformTerminalsToNonterminals [] = []
-transformTerminalsToNonterminals (Rule _ []:_) = []
-transformTerminalsToNonterminals (Rule _ (_:_:_:_):_) = []
-transformTerminalsToNonterminals [Rule left [rightLeft, rightRight]] = createNonterminalFromTerminal left [rightLeft, rightRight]
-transformTerminalsToNonterminals [Rule left [right]] = [Rule left [right]]
-transformTerminalsToNonterminals (Rule left [rightLeft, rightRight] : rest) = createNonterminalFromTerminal left [rightLeft, rightRight] ++ transformTerminalsToNonterminals rest
-transformTerminalsToNonterminals (Rule left [right] : rest) = Rule left [right] : transformTerminalsToNonterminals rest
+transformTerminalsToNonterminals [Rule left right]
+    | length right == 2 = createNonterminalFromTerminal left [head right, head (tail right)]
+    | otherwise = [Rule left right]
+transformTerminalsToNonterminals (Rule left right : rest)
+    | length right == 2 = createNonterminalFromTerminal left [head right, head (tail right)] ++ transformTerminalsToNonterminals rest
+    | otherwise = Rule left right : transformTerminalsToNonterminals rest
+
 
 -- Creates new nonterminal that derives to terminal
 -- this function creates new Nonterminal => terminal rules
@@ -77,10 +78,10 @@ createNonterminalFromTerminal _ [_] = []
 createNonterminalFromTerminal _ (_:_:_:_) = []
 createNonterminalFromTerminal left [rightLeft, rightRight]
     -- If there are two terminals on the right side, create nonterminal for both of them
-    | rightLeft /= rightLeftNew && rightRight /= rightRightNew = [Rule left [rightLeftNew,rightRightNew], Rule rightLeftNew [rightLeft], Rule rightRightNew [rightRight]]
+    | validTerminals [rightLeft] && validTerminals [rightRight] = [Rule left [rightLeftNew,rightRightNew], Rule rightLeftNew [rightLeft], Rule rightRightNew [rightRight]]
     -- If there is at least one terminal on the right side, create new nonterminal for it
-    | rightLeft /= rightLeftNew = [Rule left [rightLeftNew,rightRightNew], Rule rightLeftNew [rightLeft]]
-    | rightRight /= rightRightNew = [Rule left [rightLeftNew,rightRightNew], Rule rightRightNew [rightRight]]
+    | validTerminals [rightLeft] = [Rule left [rightLeftNew,rightRightNew], Rule rightLeftNew [rightLeft]]
+    | validTerminals [rightRight] = [Rule left [rightLeftNew,rightRightNew], Rule rightRightNew [rightRight]]
     -- Otherwise return original rule
     | otherwise = [Rule left [rightLeft,rightRight]]
     where rightLeftNew = createNewNonterminal rightLeft
