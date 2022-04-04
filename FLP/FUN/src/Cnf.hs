@@ -8,14 +8,14 @@ import IsValid(validTerminals)
 -- Transform bkg to cnf
 bkg2cnf :: Grammar -> Grammar
 bkg2cnf (Grammar nonterminals terminals rules start) = Grammar newNonterms terminals newRules start
-    where newRules = nub (transformTerminalsToNonterminals (transformBkgRulesToCnfRules rules))
-          newNonterms = nub (collectNewNonterminals newRules)
+    where newRules = transformTerminalsToNonterminals (transformBkgRulesToCnfRules rules)
+          newNonterms = collectNewNonterminals newRules
 
 -- Lastly, go through all the newly created rules and add their left side to the set of nonterminals
 collectNewNonterminals :: [Rule] -> [String]
 collectNewNonterminals [] = []
 collectNewNonterminals [Rule left right] = [left]
-collectNewNonterminals (Rule left right : rest) = left : collectNewNonterminals rest
+collectNewNonterminals (Rule left right : rest) = nub (left : collectNewNonterminals rest)
 
 -- If rule is already valid CNF rule carry on,
 -- else transform it into CNF rule
@@ -28,7 +28,7 @@ transformBkgRulesToCnfRules [Rule left right] =
 transformBkgRulesToCnfRules (Rule left right : rest) = 
     if isValidCnfRule right 
         then Rule left right : transformBkgRulesToCnfRules rest
-        else transformBkgRulesToCnfRules rest ++ transformBkgRuleToCnfRule (Rule left right) []
+        else nub (transformBkgRulesToCnfRules rest ++ transformBkgRuleToCnfRule (Rule left right) [])
 
 -- Splits BKG rule into two
 -- first rule is currently processed rule
@@ -55,6 +55,7 @@ createNonterminalFromNonterminals xs = concat (["<"] ++ tail xs ++ [">"])
 
 -- Transform terminals from right side of the rule to nonterminals
 -- Right side of the rule can now take shape:
+-- Terminal
 -- Terminal Terminal
 -- Terminal Nonterminal
 -- Nonterminal Terminal
