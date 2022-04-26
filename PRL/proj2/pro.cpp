@@ -19,10 +19,21 @@ typedef struct adjacencyList {
     int direction;
 } adjacencyList;
 
-edge *buildEdges(int numEdges, int numNodes){
+int main(int argc, char *argv[]) {
+    int numProcessors;
+    int rank;
+    MPI_Status status;
+
+    MPI_Init(&argc,&argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &numProcessors);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    char* inputString = argv[1];
+    int numNodes = atoi(argv[2]);
+    int numEdges = numProcessors;
+    // Create edges between nodes
     struct edge *edges;
     edges = (edge*)malloc(sizeof(edge) * numEdges);
-
     int j = 0;
     for (int i = 0; i < numNodes; i++) {
         if (j < numEdges) {
@@ -50,14 +61,10 @@ edge *buildEdges(int numEdges, int numNodes){
             j++;
         }
     }
-    return edges;
-}
-
-adjacencyList *buildAdjList(int numEdges, int numNodes, edge *edges){
+    
     struct adjacencyList *adjList;
     adjList = (adjacencyList*)malloc(sizeof(adjacencyList) * numEdges);
-
-    int j = 0;
+    j = 0;
     for (int i = 0; i < numNodes; i++) {
 
         if (j < numEdges) {
@@ -116,26 +123,6 @@ adjacencyList *buildAdjList(int numEdges, int numNodes, edge *edges){
             j++;
         }
     }
-    return adjList;
-}
-
-int main(int argc, char *argv[])
-{
-    int numProcessors;
-    int rank;
-    MPI_Status status;
-
-    MPI_Init(&argc,&argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &numProcessors);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    char* inputString = argv[1];
-    int numNodes = atoi(argv[2]);
-
-    int numEdges = numProcessors;
-    struct edge *edges = buildEdges(numEdges, numNodes);
-    struct adjacencyList *adjList = buildAdjList(numEdges, numNodes, edges);
-
     // if (rank == 0) {
     //     std::cout << "Nodes: " << numNodes << "\n" << "Processors: " << numProcessors << std::endl << "Edges:" << numEdges << std::endl; 
     // }
