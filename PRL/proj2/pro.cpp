@@ -19,21 +19,8 @@ typedef struct adjacencyList {
     int direction;
 } adjacencyList;
 
-int main(int argc, char *argv[]) {
-    int numProcessors;
-    int rank;
-    MPI_Status status;
-
-    MPI_Init(&argc,&argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &numProcessors);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    char* inputString = argv[1];
-    int numNodes = atoi(argv[2]);
-    int numEdges = numProcessors;
-    // Create edges between nodes
-    struct edge *edges;
-    edges = (edge*)malloc(sizeof(edge) * numEdges);
+adjacencyList* createAdjList(char* input, int numNodes, int numEdges) {
+    struct edge *edges = (edge*)malloc(sizeof(edge) * numEdges);
     int j = 0;
     for (int i = 0; i < numNodes; i++) {
         if (j < numEdges) {
@@ -61,22 +48,18 @@ int main(int argc, char *argv[]) {
             j++;
         }
     }
-    
-    struct adjacencyList *adjList;
-    adjList = (adjacencyList*)malloc(sizeof(adjacencyList) * numEdges);
+
+    struct adjacencyList *adjList = (adjacencyList*)malloc(sizeof(adjacencyList) * numEdges);
     j = 0;
     for (int i = 0; i < numNodes; i++) {
-
         if (j < numEdges) {
             adjList[j].rank = i;            
             adjList[j].edge = edges[j];
             adjList[j].reverseEdge = edges[j+1];
-            if (i==0 && numNodes > 2)
-            {
+            if (i==0 && numNodes > 2) {
                 adjList[j].firstNode = edges[j];
                 adjList[j].next = &adjList[2];
-            } else if (j + 2 < numEdges)
-            {
+            } else if (j + 2 < numEdges) {
                 adjList[j].firstNode = edges[(j/2)-1];
                 adjList[j].next = &adjList[j+2];
             } else {
@@ -90,8 +73,7 @@ int main(int argc, char *argv[]) {
             adjList[j].firstNode = edges[j];
             adjList[j].edge = edges[j];
             adjList[j].reverseEdge = edges[j-1];
-            if (j < (numNodes - 2))
-            {
+            if (j < (numNodes - 2)) {
                 adjList[j].next = &adjList[2*j+2];
             } else {
                 adjList[j].next = NULL;
@@ -123,9 +105,24 @@ int main(int argc, char *argv[]) {
             j++;
         }
     }
-    // if (rank == 0) {
-    //     std::cout << "Nodes: " << numNodes << "\n" << "Processors: " << numProcessors << std::endl << "Edges:" << numEdges << std::endl; 
-    // }
+    free(edges);
+    return adjList;
+}
+
+int main(int argc, char *argv[]) {
+    int numProcessors;
+    int rank;
+    MPI_Status status;
+
+    MPI_Init(&argc,&argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &numProcessors);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    char* inputString = argv[1];
+    int numNodes = atoi(argv[2]);
+    int numEdges = numProcessors;
+    
+    struct adjacencyList *adjList = createAdjList(inputString, numNodes, numEdges);
 
     // If there is input of size 1, I dont need to compute anything
     if (numNodes == 1) {
