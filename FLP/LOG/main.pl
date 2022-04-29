@@ -231,7 +231,6 @@ solveCube(Solution, Cube) :-
 writeSolution([], _).
 writeSolution([CurrentMove | Rotations], Cube) :-
     rotation(CurrentMove, Cube, NewCube), 
-    format('Provedena rotace ~w~n', [CurrentMove]),
     toString(NewCube), writeSolution(Rotations, NewCube).
 
 main :-
