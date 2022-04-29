@@ -19,90 +19,86 @@ typedef struct adjacencyList {
     int direction;
 } adjacencyList;
 
-adjacencyList* createAdjList(char* input, int numNodes, int numEdges) {
+adjacencyList* createAdjList(char* input, int numNodes, int numEdges, int rank) {
+    // Even indexes represent forward edge, odd indexes represent backward edge
     struct edge *edges = (edge*)malloc(sizeof(edge) * numEdges);
-    int j = 0;
-    for (int i = 0; i < numNodes; i++) {
-        if (j < numEdges) {
-            edges[j].left = i;
-            edges[j].right = (2 * i) + 1;
-            edges[j].rank = j;
-            j++;
-        }
-        if (j < numEdges) {
-            edges[j].left = (2 * i) + 1;
-            edges[j].right = i;
-            edges[j].rank = j;
-            j++;
-        }
-        if (j < numEdges) {
-            edges[j].left = i;
-            edges[j].right = (2 * i) + 2;
-            edges[j].rank = j;
-            j++;
-        }
-        if (j < numEdges) {
-            edges[j].left = (2 * i) + 2;
-            edges[j].right = i;
-            edges[j].rank = j;
-            j++;
+    int index = 0;
+    bool switchValue = true;
+    for (int i = 0; i < numEdges; i += 2) {
+        if (switchValue) {
+            edges[i].left = index;
+            edges[i].right = (2 * index) + 1;
+            edges[i].rank = i;
+
+            edges[i+1].left = (2 * index) + 1;
+            edges[i+1].right = index;
+            edges[i+1].rank = i + 1;
+            switchValue = false;
+        } else {
+            edges[i].left = index;
+            edges[i].right = (2 * index) + 2;
+            edges[i].rank = i; 
+
+            edges[i+1].left = (2 * index) + 2;
+            edges[i+1].right = index;
+            edges[i+1].rank = i + 1;            
+            index++;    
+            switchValue = true;
         }
     }
 
     struct adjacencyList *adjList = (adjacencyList*)malloc(sizeof(adjacencyList) * numEdges);
-    j = 0;
-    for (int i = 0; i < numNodes; i++) {
-        if (j < numEdges) {
-            adjList[j].rank = i;            
-            adjList[j].edge = edges[j];
-            adjList[j].reverseEdge = edges[j+1];
-            if (i==0 && numNodes > 2) {
-                adjList[j].firstNode = edges[j];
-                adjList[j].next = &adjList[2];
-            } else if (j + 2 < numEdges) {
-                adjList[j].firstNode = edges[(j/2)-1];
-                adjList[j].next = &adjList[j+2];
+    index = 0;
+    switchValue = true;
+    int listItemIndex = 0;
+    for (int i = 0; i < numEdges; i += 2) {
+        if (switchValue) {
+            adjList[i].rank = listItemIndex;
+            adjList[i].edge = edges[i];
+            adjList[i].reverseEdge = edges[i+1];
+            if (listItemIndex == 0 && numNodes > 2) {
+                adjList[i].firstNode = edges[(i/2)-1];
+                adjList[i].next = &adjList[2];
+            } else if (i + 2 < numEdges) {
+                adjList[i].firstNode = edges[(i/2)-1];
+                adjList[i].next = &adjList[i+2];
             } else {
-                adjList[j].firstNode = edges[(j/2)-1];
-                adjList[j].next = NULL;
+                adjList[i].firstNode = edges[(i/2)-1];
+                adjList[i].next = NULL;
             }
-            j++;
-        }
-        if (j < numEdges) {
-            adjList[j].rank = 2 * i + 1;
-            adjList[j].firstNode = edges[j];
-            adjList[j].edge = edges[j];
-            adjList[j].reverseEdge = edges[j-1];
-            if (j < (numNodes - 2)) {
-                adjList[j].next = &adjList[2*j+2];
+
+            adjList[i+1].rank = (2 * listItemIndex) +1;
+            adjList[i+1].firstNode = edges[i+1];
+            adjList[i+1].edge = edges[i+1];
+            adjList[i+1].reverseEdge = edges[i];
+            if (i+1 < (numNodes - 2)) {
+                adjList[i+1].next = &adjList[2*(i+1)+2];
             } else {
-                adjList[j].next = NULL;
+                adjList[i+1].next = NULL;
             }
-            j++;
-        }
-        if (j < numEdges) {
-            adjList[j].rank = i;
-            adjList[j].edge = edges[j];
-            adjList[j].reverseEdge = edges[j+1];
-            adjList[j].next = NULL;
-            if (i==0 && numNodes > 2) {
-                adjList[j].firstNode = edges[0];
+            switchValue = false;
+        } else {
+            adjList[i].rank = listItemIndex;
+            adjList[i].edge = edges[i];
+            adjList[i].reverseEdge = edges[i+1];
+            adjList[i].next = NULL;
+            if (listItemIndex == 0 && numNodes > 2) {
+                adjList[i].firstNode = edges[0];
             } else {
-                adjList[j].firstNode = edges[(j/2)-2];
+                adjList[i].firstNode = edges[(i/2)-2];
             }
-            j++;
-        }
-        if (j < numEdges) {
-            adjList[j].rank = 2 * i + 2;
-            adjList[j].edge = edges[j];
-            adjList[j].reverseEdge = edges[j-1];
-            adjList[j].firstNode = edges[j];
-            if (j < (numNodes - 2)) {
-                adjList[j].next = &adjList[2*j+2];
+
+            adjList[i+1].rank = (2 * listItemIndex) + 2;
+            adjList[i+1].edge = edges[i+1];
+            adjList[i+1].reverseEdge = edges[i];
+            adjList[i+1].firstNode = edges[i+1];
+            if (i < (numNodes - 2)) {
+                adjList[i+1].next = &adjList[2*(i+1)+2];
             } else {
-                adjList[j].next = NULL;
+                adjList[i+1].next = NULL;
             }
-            j++;
+            listItemIndex++;
+            switchValue = true;
         }
     }
     free(edges);
@@ -122,7 +118,7 @@ int main(int argc, char *argv[]) {
     int numNodes = atoi(argv[2]);
     int numEdges = numProcessors;
     
-    struct adjacencyList *adjList = createAdjList(inputString, numNodes, numEdges);
+    struct adjacencyList *adjList = createAdjList(inputString, numNodes, numEdges, rank);
 
     // If there is input of size 1, I dont need to compute anything
     if (numNodes == 1) {
