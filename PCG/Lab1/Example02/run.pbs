@@ -1,0 +1,14 @@
+#!/bin/bash
+#PBS -q qgpu
+#PBS -A DD-22-68
+#PBS -l select=1
+#PBS -l walltime=00:20:00
+#PBS -m be
+#PBS -N PCG-2
+
+ml CUDA/11.1.1-GCC-10.2.0 Qt5/5.14.2-GCCcore-10.2.0
+
+cd $PBS_O_WORKDIR
+
+make
+make run1
