@@ -197,3 +197,4 @@ cython_debug/
 
 node_modules/
 sshfs/
+libwb/
