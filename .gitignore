@@ -198,3 +198,5 @@ cython_debug/
 node_modules/
 sshfs/
 libwb/
+*.pyproject
+*.pyproject.user
