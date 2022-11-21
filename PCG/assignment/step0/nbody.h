@@ -5,7 +5,7 @@
  *
  * Paralelní programování na GPU (PCG 2022)
  * Projekt c. 1 (cuda)
- * Login: xlogin00
+ * Login: xkaspa48
  */
 
 #ifndef __NBODY_H__
@@ -23,21 +23,27 @@ constexpr float COLLISION_DISTANCE = 0.01f;
 /**
  * Particles data structure
  */
+/* struktura castice (hmotneho bodu) */
 typedef struct
 {
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//                 FILL IN: Particle data structure optimal for the use on GPU (step 0)                             //
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    float* pos_x;
+    float* pos_y;
+    float* pos_z;
+    float* vel_x;
+    float* vel_y;
+    float* vel_z;
+    float* weight;
 } t_particles;
 
 /**
 /* Velocities data structure (to be used as buffer for partial results)
  */
+/* vektor zmeny rychlosti */
 typedef struct
 {
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//                 FILL IN: Velocities data structure optimal for the use on GPU (step 0)                           //
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    float* x;
+    float* y;
+    float* z;
 } t_velocities;
 
 

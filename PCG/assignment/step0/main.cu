@@ -5,7 +5,7 @@
  *
  * Paralelní programování na GPU (PCG 2022)
  * Projekt c. 1 (cuda)
- * Login: xlogin00
+ * Login: xkaspa48
  */
 
 #include <sys/time.h>
@@ -32,12 +32,13 @@ int main(int argc, char **argv)
     exit(1);
   }
 
+  // Pojmenovat proměnnou N je strašně fajn
   // Number of particles
-  const int N           = std::stoi(argv[1]);
+  const int numberOfParticles = std::stoi(argv[1]);
   // Length of time step
-  const float dt        = std::stof(argv[2]);
+  const float lengthTimeStep = std::stof(argv[2]);
   // Number of steps
-  const int steps       = std::stoi(argv[3]);
+  const int numberOfSteps = std::stoi(argv[3]);
   // Number of thread blocks
   const int thr_blc     = std::stoi(argv[4]);
   // Write frequency
@@ -48,20 +49,20 @@ int main(int argc, char **argv)
   const int red_thr_blc = std::stoi(argv[7]);
 
   // Size of the simulation CUDA gird - number of blocks
-  const size_t simulationGrid = (N + thr_blc - 1) / thr_blc;
+  const size_t simulationGrid = (numberOfParticles + thr_blc - 1) / thr_blc;
   // Size of the reduction CUDA grid - number of blocks
   const size_t reductionGrid  = (red_thr + red_thr_blc - 1) / red_thr_blc;
 
   // Log benchmark setup
-  printf("N: %d\n", N);
-  printf("dt: %f\n", dt);
-  printf("steps: %d\n", steps);
+  printf("N: %d\n", numberOfParticles);
+  printf("dt: %f\n", lengthTimeStep);
+  printf("steps: %d\n", numberOfSteps);
   printf("threads/block: %d\n", thr_blc);
   printf("blocks/grid: %lu\n", simulationGrid);
   printf("reduction threads/block: %d\n", red_thr_blc);
   printf("reduction blocks/grid: %lu\n", reductionGrid);
 
-  const size_t recordsNum = (writeFreq > 0) ? (steps + writeFreq - 1) / writeFreq : 0;
+  const size_t recordsNum = (writeFreq > 0) ? (numberOfSteps + writeFreq - 1) / writeFreq : 0;
   writeFreq = (writeFreq > 0) ?  writeFreq : 0;
 
 
@@ -70,7 +71,14 @@ int main(int argc, char **argv)
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //                            FILL IN: CPU side memory allocation (step 0)                                          //
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+  int arraySize = numberOfParticles * sizeof(float);
+  cudaMallocHost(&particles_cpu.pos_x, arraySize);
+  cudaMallocHost(&particles_cpu.pos_y, arraySize);
+  cudaMallocHost(&particles_cpu.pos_z, arraySize);
+  cudaMallocHost(&particles_cpu.vel_x, arraySize);
+  cudaMallocHost(&particles_cpu.vel_y, arraySize);
+  cudaMallocHost(&particles_cpu.vel_z, arraySize);
+  cudaMallocHost(&particles_cpu.weight, arraySize);
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //                              FILL IN: memory layout descriptor (step 0)                                          //
@@ -83,14 +91,14 @@ int main(int argc, char **argv)
    *                      in floats, not bytes        not bytes
   */
   MemDesc md(
-        nullptr,                0,                          0,              // Postition in X
-        nullptr,                0,                          0,              // Postition in Y
-        nullptr,                0,                          0,              // Postition in Z
-        nullptr,                0,                          0,              // Velocity in X
-        nullptr,                0,                          0,              // Velocity in Y
-        nullptr,                0,                          0,              // Velocity in Z
-        nullptr,                0,                          0,              // Weight
-        N,                                                                  // Number of particles
+        particles_cpu.pos_x,                1,                          0,              // Postition in X
+        particles_cpu.pos_y,                1,                          0,              // Postition in Y
+        particles_cpu.pos_z,                1,                          0,              // Postition in Z
+        particles_cpu.vel_x,                1,                          0,              // Velocity in X
+        particles_cpu.vel_y,                1,                          0,              // Velocity in Y
+        particles_cpu.vel_z,                1,                          0,              // Velocity in Z
+        particles_cpu.weight,               1,                          0,              // Weight
+        numberOfParticles,                                                                  // Number of particles
         recordsNum);                                                        // Number of records in output file
 
   // Initialisation of helper class and loading of input data
@@ -106,9 +114,11 @@ int main(int argc, char **argv)
     std::cerr<<e.what()<<std::endl;
     return -1;
   }
+  printf("%f\n", particles_cpu.pos_x[0]);
+  printf("%f\n", particles_cpu.pos_y[0]);
+  printf("%f\n", particles_cpu.pos_z[0]);
 
-
-  t_particles particles_gpu;
+  t_particles particles_gpu{};
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //                                  FILL IN: GPU side memory allocation (step 0)                                    //
@@ -123,7 +133,7 @@ int main(int argc, char **argv)
 
   gettimeofday(&t1, 0);
 
-  for(int s = 0; s < steps; s++)
+  for(int s = 0; s < numberOfSteps; s++)
   {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                       FILL IN: kernels invocation (step 0)                                     //
@@ -164,25 +174,25 @@ int main(int argc, char **argv)
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //                        FILL IN: memory transfers for center-of-mass (step 3.1, step 3.2)                         //
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  float4 comOnCPU = centerOfMassCPU(md);
+  // float4 comOnCPU = centerOfMassCPU(md);
 
-  std::cout << "Center of mass on CPU:" << std::endl
-            << comOnCPU.x <<", "
-            << comOnCPU.y <<", "
-            << comOnCPU.z <<", "
-            << comOnCPU.w
-            << std::endl;
+  // std::cout << "Center of mass on CPU:" << std::endl
+  //           << comOnCPU.x <<", "
+  //           << comOnCPU.y <<", "
+  //           << comOnCPU.z <<", "
+  //           << comOnCPU.w
+  //           << std::endl;
 
-  std::cout << "Center of mass on GPU:" << std::endl
-            << comOnGPU.x<<", "
-            << comOnGPU.y<<", "
-            << comOnGPU.z<<", "
-            << comOnGPU.w
-            << std::endl;
+  // std::cout << "Center of mass on GPU:" << std::endl
+  //           << comOnGPU.x<<", "
+  //           << comOnGPU.y<<", "
+  //           << comOnGPU.z<<", "
+  //           << comOnGPU.w
+  //           << std::endl;
 
   // Writing final values to the file
-  h5Helper.writeComFinal(comOnGPU.x, comOnGPU.y, comOnGPU.z, comOnGPU.w);
-  h5Helper.writeParticleDataFinal();
+  // h5Helper.writeComFinal(comOnGPU.x, comOnGPU.y, comOnGPU.z, comOnGPU.w);
+  // h5Helper.writeParticleDataFinal();
 
   return 0;
 }// end of main

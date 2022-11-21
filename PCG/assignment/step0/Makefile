@@ -1,6 +1,6 @@
 # Paralelní programování na GPU (PCG 2022)
 # Projekt c. 1 (cuda)
-# Login: xlogin00
+# Login: xkaspa48
 
 
 N=4096
@@ -25,7 +25,7 @@ FLAGS=
 all: nbody
 
 nbody: nbody.cu main.cu nbody.h
-	nvcc ${FLAGS} -I${INCLUDE} nbody.cu main.cu ../commons/h5Helper.cpp ${LIBS} -o nbody
+	nvcc ${FLAGS} -I${INCLUDE} main.cu ../commons/h5Helper.cpp ${LIBS} -o nbody
 
 clean:
 	rm -f *.o nbody

@@ -6,7 +6,7 @@
  *
  * Paralelní programování na GPU (PCG 2022)
  * Projekt c. 1 (cuda)
- * Login: xlogin00
+ * Login: xkaspa48
  */
 
 #ifndef __H5HELPER_H__

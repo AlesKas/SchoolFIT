@@ -1,6 +1,6 @@
 # Paralelní programování na GPU (PCG 2021)
 # Projekt c. 1 (cuda)
-# Login: xlogin00
+# Login: xkaspa48
 
 LIBS=-lhdf5
 
