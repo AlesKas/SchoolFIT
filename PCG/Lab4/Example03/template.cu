@@ -31,26 +31,36 @@ __global__ void cudaReduction(int*       output,
                               const int  size)
 {
   // Load a segment of the input vector into shared memory
-
+  extern __shared__ int partialSum[];
 
 
   // Clear partial sum
-
-
+  partialSum[threadIdx.x] = 0;
+  __syncthreads();
 
   // Reduce the array into partial sums
-
-
+  int threadId = blockIdx.x * blockDim.x + threadIdx.x;
+  for (int i = threadId; i < size; i += gridDim.x * blockDim.x) {
+    partialSum[threadIdx.x] += input[i]; 
+  }
+  __syncthreads();
 
 
   // Reduction kernel
   // Traverse the reduction tree.
-
+  for (int stride = blockDim.x >> 1; stride >= 1; stride >>= 1) {
+    if (threadIdx.x < stride) {
+      partialSum[threadIdx.x] += partialSum[threadIdx.x + stride];
+    }
+    __syncthreads();
+  }
 
 
 
   // Write the computed sum of the block to the output vector at the
-
+  if (threadIdx.x == 0) {
+    atomicAdd(output, partialSum[0]);
+  }
 
 
 }// end of cudaReduction
@@ -79,12 +89,12 @@ int main(int argc, char **argv)
   printf("----------------- Example 3: CUDA reduction in shared memory -----------------\n");
   printf("Input size: %d\n", inputLength);
 
-  /*printf("Input sequence: ");
+  printf("Input sequence: ");
   for (int i = 0 ; i < inputLength ; i++)
   {
     printf("%d, ",hostInput[i]);
   }
-  printf("\n");*/
+  printf("\n");
 
   int* deviceInput;
   int* deviceOutput;

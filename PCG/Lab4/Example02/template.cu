@@ -47,29 +47,40 @@ using std::string;
                                      unsigned int  numBins,
                                      const char*   input,
                                      unsigned int  inputLenght)
-{
+  {
   // Privatized histogram in shared memory.
   // Since we don't know the size of the histogram in the compile time, we have to use extern shared mem without size []
-
-
+  extern __shared__ unsigned int sharedHistogram[];
 
   // Thread Id and stride (grid size).
-
-
+  unsigned int tid    = blockIdx.x * blockDim.x + threadIdx.x;
+  unsigned int stride = gridDim.x  * blockDim.x;
 
   // Clear private histogram - Consider a possibility the histogram can be bigger than the block size.
+  for (unsigned int binIdx = threadIdx.x; binIdx < numBins; binIdx += blockDim.x)
+  {
+    sharedHistogram[binIdx] = 0;
+  }
 
-
+  // Barrier to finish SM cleaning.
+  __syncthreads();
 
   // Traverse through the text and store the histogram into shared memory.
   // If there's no bin for a given char, use the last one
+  for (unsigned int i = tid; i < inputLenght; i += stride)
+  {
+    unsigned int bin = min(static_cast<unsigned int>(input[i]), numBins - 1);
+    atomicAdd(&(sharedHistogram[bin]), 1);
+  }
 
-
+  // Finish calculation of shared  histogram.
+  __syncthreads();
 
   // Add this part to global histogram.
-
-
-
+  for (unsigned int binIdx = threadIdx.x; binIdx < numBins; binIdx += blockDim.x)
+  {
+    atomicAdd(&(histogram[binIdx]), sharedHistogram[binIdx]);
+  }
 }// end of cudaHistogramShared
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -90,13 +101,13 @@ void histogramShared(unsigned int* histogram,
                      unsigned int  inputLenght)
 {
   // Zero the histogram in global memory.
-
+  cudaMemset(histogram, 0, numBins * sizeof(unsigned int));
 
 
   // Launch histogram kernel on the bins
   dim3 blockDim(256), gridDim(64);
   // The third parameter of the starting configuration will be the size of the SM.
-
+  cudaHistogramShared<<<gridDim, blockDim, numBins * sizeof(unsigned int)>>>(histogram, numBins, input, inputLenght);
 
 
 }// end of histogramShared

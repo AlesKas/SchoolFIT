@@ -31,21 +31,25 @@ __global__ void cudaReduction(int*       output,
                               const int  size)
 {
   // Thread's partial sum.
-
-
+  int partialSum = 0;
 
   // Reduce the array into partial sums
-
-
+  for (unsigned int i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x  * blockDim.x)
+  {
+    partialSum += input[i];
+  }
 
   // Warp-synchronous reduction.
-
-
+  for (unsigned int stride = 16; stride > 0; stride = stride >> 1)
+  {
+    partialSum += __shfl_down_sync(0xffffffff, partialSum, stride);
+  }
 
   // Write the computed sum of the warp to the output vector.
-
-
-
+  if ((threadIdx.x & 31) == 0)
+  {
+    atomicAdd(output, partialSum);
+  }
 }// end of cudaReduction
 //----------------------------------------------------------------------------------------------------------------------
 

@@ -48,13 +48,17 @@ using std::string;
                                      unsigned int  inputLenght)
 {
   // Thread ID and stride (grid size).
-
+  unsigned int threadId = blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int stride = gridDim.x * blockDim.x;
 
 
   // Traverse through the text and store the histogram into global memory.
   // - If there's no bin for a given char, use the last one.
   // - Remember, the input may be longer than the total number of threads.
-
+  for (int i = threadId; i < inputLenght; i += stride) {
+    unsigned int bin = min(static_cast<unsigned int>(input[i]), numBins - 1);
+    atomicAdd(&(histogram[bin]), 1);
+  }
 
 
 
@@ -82,8 +86,10 @@ void histogramGlobal(unsigned int* histogram,
 
 
   // Launch histogram kernel on the bins
-  dim3 blockDim(256), gridDim(64);
   // Launch the kernel.
+  cudaMemset(histogram, 0, numBins * sizeof(unsigned int));
+  dim3 blockDim(256), gridDim(64);
+  cudaHistogramGlobal<<<gridDim, blockDim>>>(histogram, numBins, input, inputLenght); 
 
 
 

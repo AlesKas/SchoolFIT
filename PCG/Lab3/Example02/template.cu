@@ -97,8 +97,7 @@ __global__ void transformKernel(float*      outputImage,
     //----------------------------------------------------------------------------------------------------------------//
     // 1. Write pixel [tu, tv] into outputImage                                                                       //
     //----------------------------------------------------------------------------------------------------------------//
-
-
+    outputImage[y * width + x] = tex2D<float>(texImage, tu, tv);
     //----------------------------------------------------------------------------------------------------------------//
   }
 } // end of transformKernel
@@ -164,6 +163,7 @@ bool runTest(int argc, char** argv)
   //------------------------------------------------------------------------------------------------------------------//
 
   cudaChannelFormatDesc channelDesc;
+  channelDesc = cudaCreateChannelDesc(32, 0, 0, 0, cudaChannelFormatKindFloat);
 
 
   //------------------------------------------------------------------------------------------------------------------//
@@ -175,10 +175,10 @@ bool runTest(int argc, char** argv)
   cudaArray* dInputImage = nullptr;
 
   // Allocate memory
-
+  cudaMallocArray(&dInputImage, &channelDesc, width, height);
 
   // Copy the input data into the array
-
+  cudaMemcpy2DToArray(dInputImage, 0, 0, hImage, width * sizeof(float), width * sizeof(float), height, cudaMemcpyHostToDevice);
 
 
   //------------------------------------------------------------------------------------------------------------------//
@@ -189,8 +189,8 @@ bool runTest(int argc, char** argv)
   struct cudaResourceDesc resourceDesc;
   memset(&resourceDesc, 0, sizeof(resourceDesc));
 
-  resourceDesc.resType =;
-  resourceDesc.res.array.array =;
+  resourceDesc.resType = cudaResourceTypeArray;
+  resourceDesc.res.array.array = dInputImage;
 
   //------------------------------------------------------------------------------------------------------------------//
   // 5. Set texture parameters                                                                                        //
@@ -204,12 +204,12 @@ bool runTest(int argc, char** argv)
   // cudaAddressModeClamp       Clamp to edge address mode
   // cudaAddressModeMirror      Mirror address mode
   // cudaAddressModeBorder      Border address mode
-  textureDesc.addressMode[0] =;
-  textureDesc.addressMode[1] =;
+  textureDesc.addressMode[0] = cudaAddressModeWrap;
+  textureDesc.addressMode[1] = cudaAddressModeWrap;
 
   // cudaFilterModePoint  Point filter mode
   // cudaFilterModeLinear Linear filter mode
-  textureDesc.filterMode =;
+  textureDesc.filterMode = cudaFilterModeLinear;
 
   // access with normalized texture coordinates
   textureDesc.normalizedCoords = true;
@@ -218,6 +218,8 @@ bool runTest(int argc, char** argv)
   // 6. Bind the array to the texture                                                                                 //
   //------------------------------------------------------------------------------------------------------------------//
 
+  cudaTextureObject_t texImage;
+  cudaCreateTextureObject(&texImage, &resourceDesc, &textureDesc, NULL);
 
   //------------------------------------------------------------------------------------------------------------------//
 
@@ -245,7 +247,7 @@ bool runTest(int argc, char** argv)
   //------------------------------------------------------------------------------------------------------------------//
   // 7. Unbind texture and free memory                                                                               //
   //------------------------------------------------------------------------------------------------------------------//
-
+  cudaDestroyTextureObject(texImage);
 
   //------------------------------------------------------------------------------------------------------------------//
 

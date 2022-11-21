@@ -96,7 +96,7 @@ __global__ void transformKernel(float*      outputImage,
     //----------------------------------------------------------------------------------------------------------------//
     // 1. Write pixel [tu, tv] into outputImage                                                                       //
     //----------------------------------------------------------------------------------------------------------------//
-
+    outputImage[y * width + x] = tex2D<float>(texImage, tu, tv);
 
     //----------------------------------------------------------------------------------------------------------------//
   }
@@ -172,7 +172,7 @@ bool runTest(int argc, char** argv)
   cudaChannelFormatDesc channelDesc;
   // use cudaCrateChannelDesc
   // Lecture no.5, slide 30
-  channelDesc = ;
+  channelDesc = cudaCreateChannelDesc<float>();
 
   //------------------------------------------------------------------------------------------------------------------//
   // 4. Set texture parameters                                                                                        //
@@ -185,15 +185,15 @@ bool runTest(int argc, char** argv)
   // cudaAddressModeClamp       Clamp to edge address mode
   // cudaAddressModeMirror      Mirror address mode
   // cudaAddressModeBorder      Border address mode
-  textureDesc.addressMode[0] = ; // ?
-  textureDesc.addressMode[1] = ; // ?
+  textureDesc.addressMode[0] = cudaAddressModeWrap; // ?
+  textureDesc.addressMode[1] = cudaAddressModeWrap; // ?
 
   // cudaFilterModePoint  Point filter mode
   // cudaFilterModeLinear Linear filter mode
-  textureDesc.filterMode = ; //?
+  textureDesc.filterMode = cudaFilterModeLinear; //?
 
   // access with normalized texture coordinates
-  textureDesc.normalizedCoords = ; //?
+  textureDesc.normalizedCoords = true; //?
 
   //------------------------------------------------------------------------------------------------------------------//
   // 5. Set resource descriptor
@@ -202,18 +202,19 @@ bool runTest(int argc, char** argv)
   struct cudaResourceDesc resourceDesc;
   memset(&resourceDesc, 0, sizeof(resourceDesc));
 
-  resourceDesc.resType = ;
-  resourceDesc.res.pitch2D.devPtr = ;
-  resourceDesc.res.pitch2D.desc = ;
-  resourceDesc.res.pitch2D.width  = ;
-  resourceDesc.res.pitch2D.height = ;
-  resourceDesc.res.pitch2D.pitchInBytes = ;
+  resourceDesc.resType = cudaResourceTypePitch2D;
+  resourceDesc.res.pitch2D.devPtr = dInputImage;
+  resourceDesc.res.pitch2D.desc = channelDesc;
+  resourceDesc.res.pitch2D.width  = width;
+  resourceDesc.res.pitch2D.height = height;
+  resourceDesc.res.pitch2D.pitchInBytes = width * sizeof(float);
 
   //------------------------------------------------------------------------------------------------------------------//
   // 6. Create texture object                                                                                //
   //------------------------------------------------------------------------------------------------------------------//
 
   cudaTextureObject_t texImage;
+  cudaCreateTextureObject(&texImage, &resourceDesc, &textureDesc, NULL);
 
   //------------------------------------------------------------------------------------------------------------------//
 
@@ -240,7 +241,7 @@ bool runTest(int argc, char** argv)
   //------------------------------------------------------------------------------------------------------------------//
   // 7. Unbind texture and free memory                                                                               //
   //------------------------------------------------------------------------------------------------------------------//
-
+  cudaDestroyTextureObject(texImage);
 
   //------------------------------------------------------------------------------------------------------------------//
 

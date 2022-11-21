@@ -9,11 +9,10 @@ run1:
 run2:
 	./ex1 -input data/landscape.pgm -reference data/landscape_ref.pgm
 
-PROFILE=/apps/all/CUDAcore/11.1.1/nsight-compute-2020.2.1/target/linux-desktop-glibc_2_11_3-x64/ncu --export ./Example1_profile \
+PROFILE=/usr/local/cuda-11.8/bin/ncu --export ./Example1_profile \
 			--force-overwrite \
 			--target-processes application-only \
 			--replay-mode kernel \
-			--kernel-regex-base function \
 			--launch-skip-before-match 0 \
 			--section ComputeWorkloadAnalysis \
 			--section InstructionStats \
