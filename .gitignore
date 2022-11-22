@@ -200,3 +200,4 @@ sshfs/
 libwb/
 *.pyproject
 *.pyproject.user
+data/

@@ -1,20 +1,35 @@
 Paralelní programování na GPU (PCG 2022)
 Projekt c. 1 (cuda)
-Login: xlogin00
+Login: xkaspa48
 
 
 
 Krok 0: základní implementace
 =============================
 Velikost dat    	čas jedne iterace [s]
- 5 * n * 512              ...
-    ...                   ...
-    ...                   ...
-Pro n 10 az 25
+ 5 * 10 * 512              0.035559
+ 5 * 11 * 512              0.034982
+ 5 * 12 * 512              0.038153
+ 5 * 13 * 512              0.041310
+ 5 * 14 * 512              0.043448
+ 5 * 15 * 512              0.043089
+ 5 * 16 * 512              0.045957
+ 5 * 17 * 512              0.048824
+ 5 * 18 * 512              0.051716  
+ 5 * 19 * 512              0.054616
+ 5 * 20 * 512              0.057466
+ 5 * 21 * 512              0.060347
+ 5 * 22 * 512              0.097950
+ 5 * 23 * 512              0.102451
+ 5 * 24 * 512              0.107132
+ 5 * 25 * 512              0.111969
 
 Vyskytlo se něco neočekávaného v naměřených časech  
 Pokud ano, vysvětlete:
-
+Při spuštění pro n = 22 došlo ke zvýšení doby výpočtu o 0.037s.
+Vysvětlením může být překročení počtu bloků mapovaných na SM procesor.
+V tomto případě nebude pro některé bloky volný SM procesor, na kterém se 
+budou moci vykonávat a budou tak muset čekat, což povede k prodlěvě ve výpočtu.
 
 Krok 1: optimalizace kódu
 =====================

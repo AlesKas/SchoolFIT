@@ -1,7 +1,7 @@
 /*
  * Architektura procesoru (ACH 2016)
  * Projekt c. 1 (nbody)
- * Login: xlogin00
+ * Login: xkaspa48
  */
 
 #include <cmath>

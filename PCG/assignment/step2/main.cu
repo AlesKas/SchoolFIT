@@ -115,52 +115,45 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  t_particles particles_gpu;
-  t_velocities velocities_gpu;
+  t_particles particles_gpu[2];
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //                                  FILL IN: GPU side memory allocation (step 0)                                    //
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  cudaMalloc(&particles_gpu.pos_x, arraySize);
-  cudaMalloc(&particles_gpu.pos_y, arraySize);
-  cudaMalloc(&particles_gpu.pos_z, arraySize);
-  cudaMalloc(&particles_gpu.vel_x, arraySize);
-  cudaMalloc(&particles_gpu.vel_y, arraySize);
-  cudaMalloc(&particles_gpu.vel_z, arraySize);
-  cudaMalloc(&particles_gpu.weight, arraySize);
-
-  cudaMalloc(&velocities_gpu.x, arraySize);
-  cudaMalloc(&velocities_gpu.y, arraySize);
-  cudaMalloc(&velocities_gpu.z, arraySize);
-
-
+  for (int i = 0; i < 2; i++) {
+    cudaMalloc(&particles_gpu[i].pos_x, arraySize);
+    cudaMalloc(&particles_gpu[i].pos_y, arraySize);
+    cudaMalloc(&particles_gpu[i].pos_z, arraySize);
+    cudaMalloc(&particles_gpu[i].vel_x, arraySize);
+    cudaMalloc(&particles_gpu[i].vel_y, arraySize);
+    cudaMalloc(&particles_gpu[i].vel_z, arraySize);
+    cudaMalloc(&particles_gpu[i].weight, arraySize);
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //                                       FILL IN: memory transfers (step 0)                                         //
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  cudaMemcpy(particles_gpu.pos_x, particles_cpu.pos_x, arraySize, cudaMemcpyHostToDevice);
-  cudaMemcpy(particles_gpu.pos_y, particles_cpu.pos_y, arraySize, cudaMemcpyHostToDevice);
-  cudaMemcpy(particles_gpu.pos_z, particles_cpu.pos_z, arraySize, cudaMemcpyHostToDevice);
-  cudaMemcpy(particles_gpu.vel_x, particles_cpu.vel_x, arraySize, cudaMemcpyHostToDevice);
-  cudaMemcpy(particles_gpu.vel_y, particles_cpu.vel_y, arraySize, cudaMemcpyHostToDevice);
-  cudaMemcpy(particles_gpu.vel_z, particles_cpu.vel_z, arraySize, cudaMemcpyHostToDevice);
-  cudaMemcpy(particles_gpu.weight, particles_cpu.weight, arraySize, cudaMemcpyHostToDevice);
+  for (int i = 0; i < 2; i++) {
+    cudaMemcpy(particles_gpu[i].pos_x, particles_cpu.pos_x, arraySize, cudaMemcpyHostToDevice);
+    cudaMemcpy(particles_gpu[i].pos_y, particles_cpu.pos_y, arraySize, cudaMemcpyHostToDevice);
+    cudaMemcpy(particles_gpu[i].pos_z, particles_cpu.pos_z, arraySize, cudaMemcpyHostToDevice);
+    cudaMemcpy(particles_gpu[i].vel_x, particles_cpu.vel_x, arraySize, cudaMemcpyHostToDevice);
+    cudaMemcpy(particles_gpu[i].vel_y, particles_cpu.vel_y, arraySize, cudaMemcpyHostToDevice);
+    cudaMemcpy(particles_gpu[i].vel_z, particles_cpu.vel_z, arraySize, cudaMemcpyHostToDevice);
+    cudaMemcpy(particles_gpu[i].weight, particles_cpu.weight, arraySize, cudaMemcpyHostToDevice);
+  }
 
   gettimeofday(&t1, 0);
 
   dim3 blockDim(thr_blc);
   dim3 gridDim(simulationGrid);
+  int sharedMemSize = sizeof(t_particles) * sizeof(float) * blockDim.x;
   for(int s = 0; s < numberOfSteps; s++)
   {
-    cudaMemset(velocities_gpu.x, 0, arraySize);
-    cudaMemset(velocities_gpu.y, 0, arraySize);
-    cudaMemset(velocities_gpu.z, 0, arraySize);
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                       FILL IN: kernels invocation (step 0)                                     //
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    calculate_gravitation_velocity<<<gridDim, blockDim>>>(particles_gpu, velocities_gpu, numberOfParticles, lengthTimeStep);
-    calculate_collision_velocity<<<gridDim, blockDim>>>(particles_gpu, velocities_gpu, numberOfParticles, lengthTimeStep);
-    update_particle<<<gridDim, blockDim>>>(particles_gpu, velocities_gpu, numberOfParticles, lengthTimeStep);
+    calculate_velocity<<<gridDim, blockDim, sharedMemSize>>>(particles_gpu[s % 2], particles_gpu[(s + 1) % 2], numberOfParticles, lengthTimeStep);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                          FILL IN: synchronization  (step 4)                                    //
@@ -191,13 +184,13 @@ int main(int argc, char **argv)
   //                             FILL IN: memory transfers for particle data (step 0)                                 //
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   float4 comOnGPU;
-  cudaMemcpy(particles_cpu.pos_x, particles_gpu.pos_x, arraySize, cudaMemcpyDeviceToHost);
-  cudaMemcpy(particles_cpu.pos_y, particles_gpu.pos_y, arraySize, cudaMemcpyDeviceToHost);
-  cudaMemcpy(particles_cpu.pos_z, particles_gpu.pos_z, arraySize, cudaMemcpyDeviceToHost);
-  cudaMemcpy(particles_cpu.vel_x, particles_gpu.vel_x, arraySize, cudaMemcpyDeviceToHost);
-  cudaMemcpy(particles_cpu.vel_y, particles_gpu.vel_y, arraySize, cudaMemcpyDeviceToHost);
-  cudaMemcpy(particles_cpu.vel_z, particles_gpu.vel_z, arraySize, cudaMemcpyDeviceToHost);
-  cudaMemcpy(particles_cpu.weight, particles_gpu.weight, arraySize, cudaMemcpyDeviceToHost);
+  cudaMemcpy(particles_cpu.pos_x, particles_gpu[numberOfSteps % 2].pos_x, arraySize, cudaMemcpyDeviceToHost);
+  cudaMemcpy(particles_cpu.pos_y, particles_gpu[numberOfSteps % 2].pos_y, arraySize, cudaMemcpyDeviceToHost);
+  cudaMemcpy(particles_cpu.pos_z, particles_gpu[numberOfSteps % 2].pos_z, arraySize, cudaMemcpyDeviceToHost);
+  cudaMemcpy(particles_cpu.vel_x, particles_gpu[numberOfSteps % 2].vel_x, arraySize, cudaMemcpyDeviceToHost);
+  cudaMemcpy(particles_cpu.vel_y, particles_gpu[numberOfSteps % 2].vel_y, arraySize, cudaMemcpyDeviceToHost);
+  cudaMemcpy(particles_cpu.vel_z, particles_gpu[numberOfSteps % 2].vel_z, arraySize, cudaMemcpyDeviceToHost);
+  cudaMemcpy(particles_cpu.weight, particles_gpu[numberOfSteps % 2].weight, arraySize, cudaMemcpyDeviceToHost);
 
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

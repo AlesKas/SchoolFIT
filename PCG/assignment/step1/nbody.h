@@ -47,43 +47,7 @@ typedef struct
     float* z;
 } t_velocities;
 
-
-/**
- * CUDA kernel to calculate gravitation velocity
- * @param p       - particles
- * @param tmp_vel - temp array for velocities
- * @param N       - Number of particles
- * @param dt      - Size of the time step
- */
-__global__ void calculate_gravitation_velocity(t_particles  p,
-                                               t_velocities tmp_vel,
-                                               int          N,
-                                               float        dt);
-
-/**
- * CUDA kernel to calculate collision velocity
- * @param p       - particles
- * @param tmp_vel - temp array for velocities
- * @param N       - Number of particles
- * @param dt      - Size of the time step
- */
-__global__ void calculate_collision_velocity(t_particles  p,
-                                             t_velocities tmp_vel,
-                                             int          N,
-                                             float        dt);
-
-/**
- * CUDA kernel to update particles
- * @param p       - particles
- * @param tmp_vel - temp array for velocities
- * @param N       - Number of particles
- * @param dt      - Size of the time step
- */
-__global__ void update_particle(t_particles  p,
-                                t_velocities tmp_vel,
-                                int           N,
-                                float         dt);
-
+__global__ void calculate_velocity(t_particles p_in, t_particles p_out, int N, float dt);
 /**
  * CUDA kernel to update particles
  * @param p       - particles
