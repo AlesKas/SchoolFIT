@@ -147,6 +147,7 @@ int main(int argc, char **argv)
 
   dim3 blockDim(thr_blc);
   dim3 gridDim(simulationGrid);
+  // Alokuje 7 * 4 * velikost bloku bytů sdílené paměti
   int sharedMemSize = sizeof(t_particles) * sizeof(float) * blockDim.x;
   for(int s = 0; s < numberOfSteps; s++)
   {

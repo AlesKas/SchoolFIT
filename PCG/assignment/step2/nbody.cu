@@ -13,100 +13,111 @@
 #include "nbody.h"
 
 __global__ void calculate_velocity(t_particles p_in, t_particles p_out, int N, float dt) {
-    extern __shared__ float cache[];
-    float *posX = cache;
-    float *posY = &cache[blockDim.x];
-    float *posZ = &cache[blockDim.x * 2];
-    float *velX = &cache[blockDim.x * 3];
-    float *velY = &cache[blockDim.x * 4];
-    float *velZ = &cache[blockDim.x * 5];
-    float *weights = &cache[blockDim.x * 6];
+    extern __shared__ float sharedMem[];
+    // Sdílená paměť bude mít podobu
+    /*[
+        0 až blockDim.x - 1 : pos_x
+        blockDim.x až blockDim.x * 2 - 1 : pos_y
+        blockDim.x * 2 až blockDim.x * 3 - 1 : pos_z
+        blockDim.x * 3 až blockDim.x * 4 - 1 : vel_x
+        blockDim.x * 4 až blockDim.x * 5 - 1 : vel_y
+        blockDim.x * 5 až blockDim.x * 6 - 1 : vel_z
+        blockDim.x * 6 až blockDim.x * 7 - 1 : weight
+    ]*/
+    // Ukazatele na příslušné části paměti
+    float* pos_x_SM = sharedMem;
+    float* pos_y_SM = &sharedMem[blockDim.x];
+    float* pos_z_SM = &sharedMem[blockDim.x * 2];
+    float* vel_x_SM = &sharedMem[blockDim.x * 3];
+    float* vel_y_SM = &sharedMem[blockDim.x * 4];
+    float* vel_z_SM = &sharedMem[blockDim.x * 5];
+    float* weight_SM = &sharedMem[blockDim.x * 6];
 
-    unsigned int threadsTotal = gridDim.x * blockDim.x;
-    unsigned int gridSteps = ceil(float(N) / threadsTotal);
-    unsigned int tileWidth = blockDim.x;
-    unsigned int tileCount = ceil(float(N) / tileWidth);
+    // Budeme se posouvat pouze o dlaždice, aby nám vystačila sdílená paměť
+    int tileWidth = blockDim.x;
+    int numberOfTiles = ceil(float(N) / tileWidth);
+    // Pokud by nám nestačila vlákna
+    int numberOfThreads = gridDim.x * blockDim.x;
+    int numberOfGridsNeeded = ceil(float(N) / numberOfThreads);
+    for (int grid = 0; grid < numberOfGridsNeeded; grid++) {
+        // Výpočet globálního threadId
+        int threadId = (grid * numberOfThreads) + (blockDim.x * blockIdx.x + threadIdx.x);
+        float r, dx, dy, dz;
+        float vx, vy, vz;
+        float accX = 0;
+        float accY = 0;
+        float accZ = 0;
 
-    /// Grid stride loop (if there's not enough total threads to cover all particles)
-    for (unsigned int gridIdx = 0; gridIdx < gridSteps; gridIdx++) {
-        float dx, dy, dz;
-        float accVelocityX = 0;
-        float accVelocityY = 0;
-        float accVelocityZ = 0;
+        float pos_x = p_in.pos_x[threadId];
+        float pos_y = p_in.pos_y[threadId];
+        float pos_z = p_in.pos_z[threadId];
+        float vel_x = p_in.vel_x[threadId];
+        float vel_y = p_in.vel_y[threadId];
+        float vel_z = p_in.vel_z[threadId];
+        float weight = p_in.weight[threadId];
 
-        unsigned int globalIdx = (gridIdx * threadsTotal) + (blockIdx.x * blockDim.x + threadIdx.x);
-
-        bool inBounds = globalIdx < N;
-        float p1_x = inBounds ? p_in.pos_x[globalIdx] : 0.0f;
-        float p1_y = inBounds ? p_in.pos_y[globalIdx] : 0.0f;
-        float p1_z = inBounds ? p_in.pos_z[globalIdx] : 0.0f;
-        float p1_vel_x = inBounds ? p_in.vel_x[globalIdx] : 0.0f;
-        float p1_vel_y = inBounds ? p_in.vel_y[globalIdx] : 0.0f;
-        float p1_vel_z = inBounds ? p_in.vel_z[globalIdx] : 0.0f;
-        float p1_weight = inBounds ? p_in.weight[globalIdx] : 0.0f;
-
-        /// Loop over all tiles with each thread
-        for (unsigned int tileIdx = 0; tileIdx < tileCount; tileIdx++) {
-            unsigned int tileOffset = tileIdx * blockDim.x;
-            unsigned int threadOffset = tileOffset + threadIdx.x;
-            posX[threadIdx.x] = (threadOffset < N) ? p_in.pos_x[threadOffset] : 0.0f;
-            posY[threadIdx.x] = (threadOffset < N) ? p_in.pos_y[threadOffset] : 0.0f;
-            posZ[threadIdx.x] = (threadOffset < N) ? p_in.pos_z[threadOffset] : 0.0f;
-            velX[threadIdx.x] = (threadOffset < N) ? p_in.vel_x[threadOffset] : 0.0f;
-            velY[threadIdx.x] = (threadOffset < N) ? p_in.vel_y[threadOffset] : 0.0f;
-            velZ[threadIdx.x] = (threadOffset < N) ? p_in.vel_z[threadOffset] : 0.0f;
-            weights[threadIdx.x] = (threadOffset < N) ? p_in.weight[threadOffset] : 0.0f;
-
-            /// Synchronize threads before using shared memory
+        for (int tile = 0; tile < numberOfTiles; tile++) {
+            int tileNumber = tile * blockDim.x;
+            int threadNumber = tileNumber + threadIdx.x;
+            pos_x_SM[threadIdx.x] = p_in.pos_x[threadNumber];
+            pos_y_SM[threadIdx.x] = p_in.pos_y[threadNumber];
+            pos_z_SM[threadIdx.x] = p_in.pos_z[threadNumber];
+            vel_x_SM[threadIdx.x] = p_in.vel_x[threadNumber];
+            vel_y_SM[threadIdx.x] = p_in.vel_y[threadNumber];
+            vel_z_SM[threadIdx.x] = p_in.vel_z[threadNumber];
+            weight_SM[threadIdx.x] = p_in.weight[threadNumber];
             __syncthreads();
-
-            /// Loop over all points in a single tile
-            for (int p2_idx = 0; p2_idx < tileWidth; p2_idx++) {
-                dx = p1_x - posX[p2_idx];
-                dy = p1_y - posY[p2_idx];
-                dz = p1_z - posZ[p2_idx];
-                float rr = dx * dx + dy * dy + dz * dz;
-                float r = sqrt(rr);
-
+            for (int particle = 0; particle < tileWidth; particle++) {
+                dx = pos_x - pos_x_SM[particle];
+                dy = pos_y - pos_y_SM[particle];
+                dz = pos_z - pos_z_SM[particle];
+                float p2weight = weight_SM[particle];
+                r = sqrt(dx*dx + dy*dy + dz*dz);
                 if (r > COLLISION_DISTANCE) {
+                    // Větev pro gravitaci, používám vzorce z velocity.cpp
+                    float r3, G_dt_r3, Fg_dt_m2_r;
+                    r3 = r * r * r + FLT_MIN;
                     // Fg*dt/m1/r = G*m1*m2*dt / r^3 / m1 = G*dt/r^3 * m2
+                    G_dt_r3 = -G * dt / r3;
+                    Fg_dt_m2_r = G_dt_r3 * p2weight;
                     // vx = - Fx*dt/m2 = - Fg*dt/m2 * dx/r = - Fg*dt/m2/r * dx
-                    float r3 = rr * r + FLT_MIN;
-                    float G_dt_r3 = -G * dt / r3;
-                    float Fg_dt_m2_r = G_dt_r3 * weights[p2_idx];
-                    accVelocityX += Fg_dt_m2_r * dx;
-                    accVelocityY += Fg_dt_m2_r * dy;
-                    accVelocityZ += Fg_dt_m2_r * dz;
-                } else {
-                    float weightSum = p1_weight + weights[p2_idx];
-                    float weightDiff = p1_weight - weights[p2_idx];
-                    float p2_w2 = 2 * weights[p2_idx];
+                    vx = Fg_dt_m2_r * dx;
+                    vy = Fg_dt_m2_r * dy;
+                    vz = Fg_dt_m2_r * dz;
 
-                    bool colliding = r > 0.0f;
-                    accVelocityX += colliding ? ((p1_vel_x * weightDiff + p2_w2 * velX[p2_idx]) / weightSum) - p1_vel_x
-                                              : 0.0f;
-                    accVelocityY += colliding ? ((p1_vel_y * weightDiff + p2_w2 * velY[p2_idx]) / weightSum) - p1_vel_y
-                                              : 0.0f;
-                    accVelocityZ += colliding ? ((p1_vel_z * weightDiff + p2_w2 * velZ[p2_idx]) / weightSum) - p1_vel_z
-                                              : 0.0f;
+                    accX += vx;
+                    accY += vy;
+                    accZ += vz;
+                } else {
+                    // Větev pro kolize
+                    float p2vel_x = pos_x_SM[particle];
+                    float p2vel_y = pos_y_SM[particle];
+                    float p2vel_z = pos_z_SM[particle];
+                    float weightSum = weight + p2weight;
+                    // weight * vel_x - p2weight * vel_x = vel_x * (weight - p2weight)
+                    float weightDiff = weight - p2weight;
+                    vx = ((vel_x * weightDiff + 2 * p2weight * p2vel_x) / weightSum) - vel_x;
+                    vy = ((vel_y * weightDiff + 2 * p2weight * p2vel_y) / weightSum) - vel_y;
+                    vz = ((vel_z * weightDiff + 2 * p2weight * p2vel_z) / weightSum) - vel_z;
+
+                    accX += (r > 0.0f) ? vx : 0.0f;
+                    accY += (r > 0.0f) ? vy : 0.0f;
+                    accZ += (r > 0.0f) ? vz : 0.0f;
                 }
             }
-
-            /// Wait for all threads to finish to avoid overwritten shared memory
             __syncthreads();
         }
+        if (threadId < N) {
+            p_out.vel_x[threadId] = vel_x + accX;
+            p_out.vel_y[threadId] = vel_y + accY;
+            p_out.vel_z[threadId] = vel_z + accZ;
 
-        if (globalIdx < N) {
-            p_out.vel_x[globalIdx] = p1_vel_x + accVelocityX;
-            p_out.vel_y[globalIdx] = p1_vel_y + accVelocityY;
-            p_out.vel_z[globalIdx] = p1_vel_z + accVelocityZ;
-
-            p_out.pos_x[globalIdx] = p1_x + p_out.vel_x[globalIdx] * dt;
-            p_out.pos_y[globalIdx] = p1_y + p_out.vel_y[globalIdx] * dt;
-            p_out.pos_z[globalIdx] = p1_z + p_out.vel_z[globalIdx] * dt;
+            p_out.pos_x[threadId] = pos_x + p_out.vel_x[threadId] * dt;
+            p_out.pos_y[threadId] = pos_y + p_out.vel_y[threadId] * dt;
+            p_out.pos_z[threadId] = pos_z + p_out.vel_z[threadId] * dt;
         }
     }
-}// end of calculate_gravitation_velocity
+}
 
 /**
  * CUDA kernel to update particles

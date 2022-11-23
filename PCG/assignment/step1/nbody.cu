@@ -55,11 +55,9 @@ __global__ void calculate_velocity(t_particles p_in, t_particles p_out, int N, f
         float p2vel_y = p_in.vel_y[particle];
         float p2vel_z = p_in.vel_z[particle];
 
-        r = sqrt(dx*dx + dy*dy + dz*dz);
-        float weightSum = weight + p_in.weight[particle];
-
         // weight * vel_x - p2weight * vel_x = vel_x * (weight - p2weight)
         float weightDiff = weight - p2weight;
+        float weightSum = weight + p2weight;
         vx = ((vel_x * weightDiff + 2 * p2weight * p2vel_x) / weightSum) - vel_x;
         vy = ((vel_y * weightDiff + 2 * p2weight * p2vel_y) / weightSum) - vel_y;
         vz = ((vel_z * weightDiff + 2 * p2weight * p2vel_z) / weightSum) - vel_z;

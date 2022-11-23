@@ -34,9 +34,12 @@ budou moci vykonávat a budou tak muset čekat, což povede k prodlěvě ve výp
 Krok 1: optimalizace kódu
 =====================
 Došlo ke zrychlení?
-
+Ano, došlo k výraznému zrychlení.
 Popište hlavní důvody:
-
+Hlavními důvody jsou:
+Sloučení kernelů do jednoho
+a
+výrazné snížení FP operací optimalizací výrazů.
 
 
 Krok 2: sdílená paměť
