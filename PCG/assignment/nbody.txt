@@ -45,9 +45,9 @@ výrazné snížení FP operací optimalizací výrazů.
 Krok 2: sdílená paměť
 =====================
 Došlo ke zrychlení?
-
+Ano, došlo ke zrychlení.
 Zdůvodněte:
-
+Důvodem je přístup do sdílené, místo do globání paměti, což vede k nižším latencím k získání dat, což vedlo ke zvýšení efektivity SM procesorů.
 
 
 
