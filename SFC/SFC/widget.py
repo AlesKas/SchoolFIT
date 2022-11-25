@@ -11,7 +11,8 @@ from PySide6.QtWidgets import QApplication, QWidget, QTextEdit, QPushButton
 # You need to run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py, or
 #     pyside2-uic form.ui -o ui_form.py
-from ui_form import Ui_Widget
+from write import Ui_Form as writeForm
+from start_form import Ui_Form as mainForm
 
 class SDM():
     def __init__(self, addr_length, num_addresses, diametr, counter_length, qtWidget) -> None:
@@ -48,18 +49,36 @@ class SDM():
         return output
 
 class Widget(QWidget):
+    @Slot()
+    def read_clicked(self):
+        print("Button read clicked, Hello!")
+    
+    @Slot()
+    def write_clicked(self):
+        print("Button write clicked, Hello!")
+        self.start.close()
+        self.ui = writeForm()
+        self.ui.setupUi(self)
+        self.ui.show()
+
+    @Slot()
+    def exit_form(self):
+        exit(0)
+
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.ui = Ui_Widget()
-        self.ui.setupUi(self)
+        self.start = mainForm()
+        self.start.setupUi(self)
+        self.start.read_button.clicked.connect(self.read_clicked)
+        self.start.write_button.clicked.connect(self.write_clicked)
+        self.start.exit_button.clicked.connect(self.exit_form)
+        # self.ui = Ui_Widget()
+        # self.ui.setupUi(self)
 
-        @Slot()
-        def say_hello(self):
-            print("Button clicked, Hello!")
 
-        for child in self.findChildren(QTextEdit):
-            child.setReadOnly(True)
-        self.ui.initButton.clicked.connect(say_hello)
+        # for child in self.findChildren(QTextEdit):
+        #     child.setReadOnly(True)
+        # self.ui.initButton.clicked.connect(say_hello)
 
 
 if __name__ == "__main__":
