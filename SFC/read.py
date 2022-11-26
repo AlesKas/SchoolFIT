@@ -1901,7 +1901,7 @@ class Ui_Form(QWidget):
         if self.states[self.state] == 'calculate_threshold':
             sumName = 'soucet_'
             for sumN in range(1, 9):
-                self.findChild(QLineEdit, sumName + str(sumN)).setStyleSheet("QLineEdit {background : white;}")
+                self.findChild(QLineEdit, sumName + str(sumN)).setStyleSheet("")
             thresholdName = 'prah_'
             for sumN in range(1, 9):
                 self.findChild(QLineEdit, thresholdName + str(sumN)).setStyleSheet("QLineEdit {background : blue;}")
@@ -1917,7 +1917,7 @@ class Ui_Form(QWidget):
             sumName = 'soucet_'
             outputName = 'odezva_'
             for sumN in range(1, 9):
-                self.findChild(QLineEdit, thresholdName + str(sumN)).setStyleSheet("QLineEdit {background : white;}")
+                self.findChild(QLineEdit, thresholdName + str(sumN)).setStyleSheet("")
             for sumN in range(1, 9):
                 self.findChild(QLineEdit, outputName + str(sumN)).setStyleSheet("QLineEdit {background : blue;}")
             for idx in range(1, 9):
@@ -1929,7 +1929,7 @@ class Ui_Form(QWidget):
             return
         if self.states[self.state] == 'clear_colours':
             for child in self.findChildren(QLineEdit):
-                child.setStyleSheet("QLineEdit {background : white;}")
+                child.setStyleSheet("")
             self.state = 0
             return
 

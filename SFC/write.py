@@ -1788,7 +1788,7 @@ class Ui_Form(QWidget):
             return
         if self.states[self.state] == 'clear_colours':
             for child in self.findChildren(QLineEdit):
-                child.setStyleSheet("QLineEdit {background : white;}")
+                child.setStyleSheet("")
             widgetNameSelect = 'select_'
             widgetNameDistance = 'distance_'
             found = False
