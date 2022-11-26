@@ -1962,7 +1962,8 @@ class Ui_Form(QWidget):
 
     @Slot()
     def exit_form(self):
-        exit(0)
+        import os
+        os._exit(0)
 
     @Slot()
     def init(self):

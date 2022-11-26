@@ -94,7 +94,8 @@ class Ui_Form(QWidget):
 
     @Slot()
     def exit_form(self):
-        exit(0)
+        import os
+        os._exit(0)
 
     def __init__(self, parent=None):
         super().__init__(parent)

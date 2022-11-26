@@ -1820,7 +1820,8 @@ class Ui_Form(QWidget):
 
     @Slot()
     def exit_form(self):
-        exit(0)
+        import os
+        os._exit(0)
 
     def init_buttons(self):
         self.states = ['init', 'distance', 'select', 'select_selected', 'check_response', 'update_values', 'clear_colours']
