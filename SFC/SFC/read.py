@@ -1812,7 +1812,7 @@ class Ui_Form(QWidget):
     # setupUi
 
     def retranslateUi(self, Form):
-        Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
+        Form.setWindowTitle(QCoreApplication.translate("Form", u"SDM", None))
         self.label.setText(QCoreApplication.translate("Form", u"Vstupn\u00ed vektor", None))
         self.label_3.setText(QCoreApplication.translate("Form", u"Polom\u011br", None))
         self.label_2.setText(QCoreApplication.translate("Form", u"Odezva", None))
@@ -1831,6 +1831,8 @@ class Ui_Form(QWidget):
             
     @Slot()
     def step(self):
+        if self.init_counter == 0:
+            return
         if self.states[self.state] == 'init':
             self.input_vector = np.random.randint(2, size=(1, 8), dtype=np.int8)
             self.fill_input()

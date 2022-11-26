@@ -65,7 +65,7 @@ class Ui_Form(QWidget):
     # setupUi
 
     def retranslateUi(self, Form):
-        Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
+        Form.setWindowTitle(QCoreApplication.translate("Form", u"SMD", None))
         self.label.setText(QCoreApplication.translate("Form", u"Uk\u00e1zka algoritmu Sparse Distributed Memory", None))
         self.read_button.setText(QCoreApplication.translate("Form", u"\u010cten\u00ed", None))
         self.write_button.setText(QCoreApplication.translate("Form", u"Z\u00e1pis", None))
