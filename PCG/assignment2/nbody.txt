@@ -1,0 +1,63 @@
+/**
+ * @file      main.cpp
+ *
+ * @author    Jiri Jaros \n
+ *            Faculty of Information Technology \n
+ *            Brno University of Technology \n
+ *            jarosjir@fit.vutbr.cz
+ *
+ * @brief     PCG Assignment 2
+ *            N-Body simulation in ACC
+ *
+ * @version   2022
+ *
+ * @date      11 November  2020, 11:22 (created) \n
+ * @date      16 November  2022, 15:09 (revised) \n
+ *
+ */
+
+
+Krok 1: základní implementace
+===============================================================================
+Velikost dat    	čas jedne iterace [s]
+ 5 * n * 512              ...
+    ...                   ...
+    ...                   ...
+Pro n 10 az 25
+
+Vyskytla se nějaká anomálie v datech
+Pokud ano, vysvětlete:
+
+
+Krok 2: optimalizace kódu
+===============================================================================
+Došlo ke zrychlení?
+
+Popište dva hlavní důvody:
+
+
+Krok 3: Težiště
+===============================================================================
+Kolik kernelů je nutné použít k výpočtu?
+
+Kolik další paměti jste museli naalokovat?
+
+Jaké je zrychelní vůči sekveční verzi?
+(provedu to smyčkou #pragma acc parallel loop seq)
+Zdůvodněte:
+
+
+
+
+Krok 4: analýza výkonu
+======================
+N            čas GPU 1 [s]   propustnost 1 [MB/s]    výkon 1 [MFLOPS]   čas GPU 2 [s]  propustnost 2 [MB/s]    výkon 2 [MFLOPS]
+2^n * 1024      ...            ...            ...          ...             ...               ...                    ...
+    ...         ...            ...            ...          ...             ...               ...                    ...
+    ...         ...            ...            ...          ...             ...               ...                    ...
+
+Pro n 1 az 10
+
+Od jakého počtu částic se vyplatí počítat na grafické kartě?
+
+===============================================================================
