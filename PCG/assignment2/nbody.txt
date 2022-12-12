@@ -1,0 +1,91 @@
+/**
+ * @file      main.cpp
+ *
+ * @author    Ales Kasparek - xkaspa48 \n
+ *            Faculty of Information Technology \n
+ *            Brno University of Technology \n
+ *            xkaspa48@stud.fit.vutbr.cz
+ *
+ * @brief     PCG Assignment 2
+ *            N-Body simulation in ACC
+ *
+ * @version   2022
+ *
+ * @date      11 November  2020, 11:22 (created) \n
+ * @date      16 November  2022, 15:09 (revised) \n
+ *
+ */
+
+
+Krok 1: základní implementace
+===============================================================================
+Velikost dat    	čas jedne iterace [s]
+ 5 * 10 * 512              0.017000 s
+ 5 * 11 * 512              0.016000 s
+ 5 * 12 * 512              0.017000 s
+ 5 * 13 * 512              0.018000 s
+ 5 * 14 * 512              0.019000 s
+ 5 * 15 * 512              0.020000 s
+ 5 * 16 * 512              0.022000 s
+ 5 * 17 * 512              0.023000 s
+ 5 * 18 * 512              0.024000 s
+ 5 * 19 * 512              0.026000 s
+ 5 * 20 * 512              0.027000 s
+ 5 * 21 * 512              0.029000 s
+ 5 * 22 * 512              0.030000 s
+ 5 * 23 * 512              0.031000 s
+ 5 * 24 * 512              0.033000 s
+ 5 * 25 * 512              0.034000 s
+
+Vyskytla se nějaká anomálie v datech
+Pokud ano, vysvětlete:
+V datech nejsou žádné viditelné anomálie.
+
+Krok 2: optimalizace kódu
+===============================================================================
+Došlo ke zrychlení?
+Ano, došlo k výraznému zrychlení.
+Pro velikost vstupu 5 * 10 * 512 je to téměř trojnásobné zrychelní:
+    step1   11.329000 s
+    step2   4.415000 s
+Popište dva hlavní důvody:
+1. 
+    Menší režije vzniklá sloučením dvou kernelů do jednoho, to má pak dále za následek snížení operací LOAD.
+2.
+    Snížení počtu FP operací, způsobené optimalizací výrazů
+
+Krok 3: Težiště
+===============================================================================
+Kolik kernelů je nutné použít k výpočtu?
+K výpočtu jsem použil dva kernely.
+První kernel kopíruje data do pomocné paměti, ve které pak druhý kernel provádí redukci.
+Kolik další paměti jste museli naalokovat?
+Při výpočtu jsem alokoval N * sizeof(float4) bytů paměti, která slouží jako pomocná paměť, ve které se provádí redukce výsledného těžiště.
+Jaké je zrychelní vůči sekveční verzi?
+(provedu to smyčkou #pragma acc parallel loop seq)
+Zdůvodněte:
+Pro velikost 5 * 10 * 512
+GPU:
+CPU:
+
+
+Bohužel profilování mi nešlo pustit jak na Karolině, tak na Barboře, RIP bodíky
+Krok 4: analýza výkonu
+======================
+N            čas CPU 1 [s]   propustnost 1 [MB/s]    výkon 1 [MFLOPS]   čas GPU 2 [s]  propustnost 2 [MB/s]    výkon 2 [MFLOPS]
+    2048      0.024000            ...            ...          ...             0.001000               ...                    ...
+    4096      0.064000            ...            ...          ...             0.002000             ...                    ...
+    8192      0.070000            ...            ...          ...             0.004000               ...                    ...
+    16384     0.155000           ...            ...          ...              0.007000               ...                    ...
+    32768     0.525000           ...            ...          ...              0.015000               ...                    ...
+    65536     1.667000         ...            ...          ...                0.030000               ...                    ...
+    131072    6.306000            ...            ...          ...             0.118000               ...                    ...
+    262144    24.578000           ...            ...          ...             0.377000               ...                    ...
+    524288    87.202000           ...            ...          ...             1.187000               ...                    ...
+    1048576   391.179000            ...            ...          ...           4.785000               ...                    ...
+
+Pro n 1 az 10
+
+Od jakého počtu částic se vyplatí počítat na grafické kartě?
+
+===============================================================================

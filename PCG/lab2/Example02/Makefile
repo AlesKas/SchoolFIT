@@ -24,7 +24,7 @@ run4:
 run5:
 	./ex2 -e MatrixMultiplication/Dataset/5/output.raw -i MatrixMultiplication/Dataset/5/input0.raw,MatrixMultiplication/Dataset/5/input1.raw  -t matrix
 
-PROFILE=/apps/all/CUDAcore/11.1.1/nsight-compute-2020.2.1/target/linux-desktop-glibc_2_11_3-x64/ncu --export ./Example2_profile \
+PROFILE=ncu --export ./Example2_profile \
 			--force-overwrite \
 			--target-processes application-only \
 			--replay-mode kernel \
