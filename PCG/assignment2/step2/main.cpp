@@ -12,7 +12,7 @@
  * @version   2022
  *
  * @date      11 November  2020, 11:22 (created) \n
- * @date      15 November  2022, 14:10 (revised) \n
+ * @date      15 November  2022, 14:03 (revised) \n
  *
  */
 
@@ -49,13 +49,13 @@ int main(int argc, char **argv)
 
   const size_t recordsNum = (writeFreq > 0) ? (steps + writeFreq - 1) / writeFreq : 0;
 
+
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //                                         Code to be implemented                                                   //
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // 1.  Memory allocation on CPU
-  Particles particles(N);
-  Velocities velocities(N);
+  Particles particles_1(N);
 
   // 2. Create memory descriptor
   /*
@@ -66,13 +66,13 @@ int main(int argc, char **argv)
    *                                    in floats, not bytes        not bytes
   */
   MemDesc md(
-                   &particles.positions[0].x,  4, 0,            // Position in X
-                   &particles.positions[0].y,  4, 0,            // Position in Y
-                   &particles.positions[0].z,  4, 0,            // Position in Z
-                   &particles.velocities[0].x, 3, 0,            // Velocity in X
-                   &particles.velocities[0].y, 3, 0,            // Velocity in Y
-                   &particles.velocities[0].z, 3, 0,            // Velocity in Z
-                   &particles.positions[0].w, 4, 0,            // Weight
+                   &particles_1.positions[0].x,  4, 0,            // Position in X
+                   &particles_1.positions[0].y,  4, 0,            // Position in Y
+                   &particles_1.positions[0].z,  4, 0,            // Position in Z
+                   &particles_1.velocities[0].x, 3, 0,            // Velocity in X
+                   &particles_1.velocities[0].y, 3, 0,            // Velocity in Y
+                   &particles_1.velocities[0].z, 3, 0,            // Velocity in Z
+                   &particles_1.positions[0].w, 4, 0,            // Weight
                    N,                                           // Number of particles
                    recordsNum);                                 // Number of records in output file
 
@@ -91,8 +91,13 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
   // 3. Copy data to GPU
-  particles.copyToGPU();
-  velocities.Memset(0);
+  particles_1.copyToGPU();
+  Particles particles_2(particles_1);
+  particles_2.copyToGPU();
+  std::vector<Particles*> particles{ 
+    &particles_1, 
+    &particles_2
+  };
 
   // Start the time
   auto startTime = std::chrono::high_resolution_clock::now();
@@ -102,10 +107,7 @@ int main(int argc, char **argv)
   // 4. Run the loop - calculate new Particle positions.
   for (int s = 0; s < steps; s++)
   {
-    calculate_gravitation_velocity(particles, velocities, N, dt);
-    calculate_collision_velocity(particles, velocities, N, dt);
-    update_particle(particles, velocities, N, dt);
-    velocities.MemsetOnDevice(0);
+    calculate_velocity(*particles[s % 2], *particles[(s + 1) % 2], N, dt);
     /// In step 4 - fill in the code to store Particle snapshots.
     if (writeFreq > 0 && (s % writeFreq == 0))
     {
@@ -129,9 +131,11 @@ int main(int argc, char **argv)
 
 
   // 5. Copy data from GPU back to CPU.
-  particles.copyToHost();
-
-
+  particles[steps % 2]->copyToHost();
+  if (steps % 2 > 0) {
+    std::memcpy(particles[0]->positions, particles[1]->positions, sizeof(float4) * N);
+    std::memcpy(particles[0]->velocities, particles[1]->velocities, sizeof(float3) * N);
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

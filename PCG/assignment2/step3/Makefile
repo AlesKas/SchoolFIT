@@ -133,3 +133,33 @@ check_output:
 	-h5diff -v2 -p 0.00001 $(SAMPLE_OUTPUT) $(OUTPUT) /com_y
 	-h5diff -v2 -p 0.00001 $(SAMPLE_OUTPUT) $(OUTPUT) /com_z
 	-h5diff -v2 -p 0.00001 $(SAMPLE_OUTPUT) $(OUTPUT) /com_w
+
+PROFILE=ncu \
+			--export ./Example3_profile \
+			--force-overwrite \
+			--target-processes all \
+			--replay-mode kernel \
+			--launch-skip-before-match 0 \
+			--section ComputeWorkloadAnalysis \
+			--section InstructionStats \
+			--section LaunchStats \
+			--section MemoryWorkloadAnalysis \
+			--section MemoryWorkloadAnalysis_Chart \
+			--section MemoryWorkloadAnalysis_Tables \
+			--section Occupancy \
+			--section SchedulerStats \
+			--section SourceCounters \
+			--section SpeedOfLight \
+			--section SpeedOfLight_RooflineChart \
+			--section WarpStateStats \
+			--sampling-interval auto \
+			--sampling-max-passes 5 \
+			--sampling-buffer-size 33554432 \
+			--profile-from-start 1 \
+			--cache-control all \
+			--clock-control base \
+			--apply-rules yes \
+			--check-exit-code yes
+
+prof1:
+	$(PROFILE) ./nbody 4096 0.01f 1 20 ../data/4096.h5 ../data/4096.output.h5

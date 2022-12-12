@@ -1,5 +1,5 @@
 /**
- * @file      nbody.ch
+ * @file      nbody.h
  *
  * @author    Ales Kasparek - xkaspa48 \n
  *            Faculty of Information Technology \n
@@ -74,13 +74,23 @@ struct Particles
   // It is recommended to implement constructor / destructor and copyToGPU and copyToCPU routines
   float4* positions;
   float3* velocities;
-  const int size = 0;
+  int size = 0;
   Particles(int count) : size(count) {
     positions = new float4[count];
     velocities = new float3[count];
     #pragma acc enter data copyin(this)
-    #pragma acc enter data create(positions[size])
-    #pragma acc enter data create(velocities[size])
+    #pragma acc enter data create(positions[0:size])
+    #pragma acc enter data create(velocities[0:size])
+  }
+  Particles(const Particles& src) : size(src.size) {
+    positions = new float4[src.size];
+    velocities = new float3[src.size];
+    size = src.size;
+    std::memcpy(positions, src.positions, src.size * sizeof(float4));
+    std::memcpy(velocities, src.velocities, src.size * sizeof(float3));
+    #pragma acc enter data copyin(this)
+    #pragma acc enter data create(positions[0:src.size])
+    #pragma acc enter data create(velocities[0:src.size])
   }
   ~Particles() {
     #pragma acc exit data delete(positions)
@@ -90,12 +100,12 @@ struct Particles
     delete[] velocities;
   }
   void copyToGPU() {
-    #pragma acc update device(positions[size])
-    #pragma acc update device(velocities[size])
+    #pragma acc update device(positions[0:size])
+    #pragma acc update device(velocities[0:size])
   }
   void copyToHost() {
-    #pragma acc update host(positions[size])
-    #pragma acc update host(velocities[size])
+    #pragma acc update host(positions[0:size])
+    #pragma acc update host(velocities[0:size])
   }
 };// end of Particles
 //----------------------------------------------------------------------------------------------------------------------
@@ -113,7 +123,7 @@ struct Velocities
   Velocities(int count) : size(count) {
     velocities = new float3[count];
     #pragma acc enter data copyin(this)
-    #pragma acc enter data create(velocities[size])
+    #pragma acc enter data create(velocities[0:size])
   }
   ~Velocities() {
     #pragma acc exit data delete(velocities)
@@ -121,10 +131,10 @@ struct Velocities
     delete[] velocities;
   }
   void copyToGPU() {
-    #pragma acc update device(velocities[size])
+    #pragma acc update device(velocities[0:size])
   }
   void copyToHost() {
-    #pragma acc update host(velocities[size])
+    #pragma acc update host(velocities[0:size])
   }
   void Memset(int val) {
     std::memset(velocities, val, size * sizeof(float3));
@@ -148,36 +158,10 @@ struct Velocities
  * @param [in ] N        - Number of particles
  * @param [in]  dt       - Time step size
  */
-void calculate_gravitation_velocity(const Particles& p,
-                                    Velocities&      tmp_vel,
+void calculate_velocity(const Particles& p_in,
+                                    Particles& p_out,
                                     const int        N,
                                     const float      dt);
-
-/**
- * Calculate collision velocity
- * @param [in]  p        - Particles
- * @param [out] tmp_vel  - Temporal velocity
- * @param [in ] N        - Number of particles
- * @param [in]  dt       - Time step size
- */
-void calculate_collision_velocity(const Particles& p,
-                                  Velocities&      tmp_vel,
-                                  const int        N,
-                                  const float      dt);
-
-/**
- * Update particle position
- * @param [in]  p        - Particles
- * @param [out] tmp_vel  - Temporal velocity
- * @param [in ] N        - Number of particles
- * @param [in]  dt       - Time step size
- */
-void update_particle(const Particles& p,
-                     Velocities&      tmp_vel,
-                     const int        N,
-                     const float      dt);
-
-
 
 /**
  * Compute center of gravity - implement in steps 3 and 4.
@@ -185,7 +169,8 @@ void update_particle(const Particles& p,
  * @param [in] N - Number of particles
  * @return Center of Mass [x, y, z] and total weight[w]
  */
-float4 centerOfMassGPU(const Particles& p,
+void centerOfMassGPU(const Particles& p,
+                       float4* helper,
                        const int        N);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
