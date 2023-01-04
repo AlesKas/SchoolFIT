@@ -1,0 +1,2 @@
+$$P(x'|X) = \int P(x', \eta | X) d\eta = \int P(x'|\eta) \text{ } P(\eta|X) d\eta$$
+We can gain extra accuracy if we don't decide for the most likely $\eta$. Instead of making a hard decision and using the most probable $\eta$, we can average through all settings (use encoded uncertainty of $P(\eta|X)$) to generate a new sample $x'$ which whill be more robust to overfitting.
