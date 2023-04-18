@@ -15,4 +15,4 @@
 // Preddefinovani vstupnich hodnot a spravnych vystupnich hodnot
 // mozno pouzit vygenerovany h soubor z t2bconv
 //-----------------------------------------------------------------------
-#include "data/median5.h"
+#include "data/parita5.h"
