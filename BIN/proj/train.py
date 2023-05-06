@@ -24,6 +24,7 @@ def loss_batch(model, loss_fun, xb, yb, opt=None, metric=None):
     return loss.item(), len(xb), metric_result
 
 def evaluate(model, loss_fun, valid_dl, metric=None):
+    model.eval()
     with torch.no_grad():
         results = [loss_batch(model, loss_fun, xb.to(dev), yb.to(dev), metric=metric) for xb, yb in valid_dl]
         losses, nums, metric = zip(*results)
@@ -38,6 +39,7 @@ def evaluate(model, loss_fun, valid_dl, metric=None):
     return avg_loss, total, avg_metric
 
 def fit(epochs, model, loss_fun, opt, train_dl, valid_dl, metric=None):
+    model.train()
     for epoch in range(epochs):
         for xb, yb in train_dl:
             xb, yb = xb.to(dev), yb.to(dev)
